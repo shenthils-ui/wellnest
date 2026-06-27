@@ -1,0 +1,199 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useApp } from '../context/AppContext';
+import { useDay } from '../hooks/useDay';
+import { dayCompletion, groupByBlock } from '../lib/selectors';
+import { ENCOURAGEMENTS } from '../lib/constants';
+import { isFuture } from '../lib/date';
+import ProgressRing from './ProgressRing';
+import ActivityRow from './ActivityRow';
+import SymptomScale from './SymptomScale';
+import { SparkleIcon } from './Icons';
+
+function encouragementFor(date, percent) {
+  if (percent === 100) return 'Every step done today — beautifully steady. 🌿';
+  let h = 0;
+  for (const ch of date) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return ENCOURAGEMENTS[h % ENCOURAGEMENTS.length];
+}
+
+export default function DayEditor({ date }) {
+  const { catalog } = useApp();
+  const { day, loading, setLog, setSymptom, addSymptom, clearSymptom, setMeta, toggleTherapy } = useDay(date);
+
+  const completion = useMemo(
+    () => (day ? dayCompletion(catalog.activities, date, day.logs) : { expected: 0, done: 0, percent: null }),
+    [catalog.activities, date, day]
+  );
+  const groups = useMemo(
+    () => groupByBlock(catalog.activities, date),
+    [catalog.activities, date]
+  );
+
+  // notes + cycle: local state with debounced autosave
+  const [notes, setNotes] = useState('');
+  const [cycle, setCycle] = useState('');
+  const timer = useRef(null);
+  useEffect(() => {
+    if (day) {
+      setNotes(day.notes || '');
+      setCycle(day.cycle_day != null ? String(day.cycle_day) : '');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day?.date, loading]);
+
+  const commitMeta = (nextNotes, nextCycle) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(() => {
+      const cd = nextCycle === '' ? null : Math.max(1, Math.min(60, parseInt(nextCycle, 10) || 0)) || null;
+      setMeta(nextNotes === '' ? null : nextNotes, cd);
+    }, 500);
+  };
+
+  if (loading && !day) {
+    return (
+      <div className="space-y-3">
+        <div className="card h-28 animate-pulse" />
+        <div className="card h-40 animate-pulse" />
+      </div>
+    );
+  }
+
+  const future = isFuture(date);
+
+  return (
+    <div className="space-y-5">
+      {/* completion */}
+      <div className="card flex items-center gap-4 p-4">
+        <ProgressRing percent={completion.percent ?? 0} size={76}>
+          <span className="text-xl font-bold text-slate-800 dark:text-slate-100">
+            {completion.percent ?? '–'}
+            {completion.percent != null && <span className="text-xs">%</span>}
+          </span>
+        </ProgressRing>
+        <div className="min-w-0 flex-1">
+          {completion.expected > 0 ? (
+            <>
+              <p className="font-semibold text-slate-800 dark:text-slate-100">
+                {completion.done} of {completion.expected} done
+              </p>
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                {future ? 'Planning ahead — no pressure.' : encouragementFor(date, completion.percent)}
+              </p>
+            </>
+          ) : (
+            <p className="text-sm text-slate-500">Nothing scheduled today — rest well. 🌙</p>
+          )}
+        </div>
+      </div>
+
+      {/* activities by time block */}
+      {groups.map((group) => (
+        <section key={group.key}>
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <span aria-hidden>{group.emoji}</span>
+            <h2 className="section-title">{group.label}</h2>
+          </div>
+          <div className="space-y-2">
+            {group.activities.map((a) => (
+              <ActivityRow
+                key={a.id}
+                activity={a}
+                status={day.logs[a.id] || null}
+                onCycle={(s) => setLog(a.id, s)}
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+
+      {groups.length === 0 && (
+        <div className="card p-6 text-center text-sm text-slate-500">
+          No active activities yet. Add some in <span className="font-medium">Settings</span>.
+        </div>
+      )}
+
+      {/* symptoms */}
+      {catalog.metrics.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <SparkleIcon width={16} height={16} className="text-brand-500" />
+            <h2 className="section-title">How are you feeling?</h2>
+          </div>
+          <div className="space-y-2">
+            {catalog.metrics.map((m) => (
+              <SymptomScale
+                key={m.id}
+                metric={m}
+                data={day.symptoms[m.id]}
+                onSet={(v) => setSymptom(m.id, v)}
+                onAdd={(v) => addSymptom(m.id, v)}
+                onClear={() => clearSymptom(m.id)}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* notes + cycle */}
+      <section className="card space-y-3 p-4">
+        <div>
+          <label className="section-title mb-1.5 block">Notes</label>
+          <textarea
+            className="input min-h-[72px] resize-y"
+            placeholder="Anything worth remembering about today…"
+            value={notes}
+            onChange={(e) => {
+              setNotes(e.target.value);
+              commitMeta(e.target.value, cycle);
+            }}
+          />
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="section-title">Cycle day</label>
+          <input
+            type="number"
+            min="1"
+            max="60"
+            inputMode="numeric"
+            className="input w-24"
+            placeholder="—"
+            value={cycle}
+            onChange={(e) => {
+              setCycle(e.target.value);
+              commitMeta(notes, e.target.value);
+            }}
+          />
+          <span className="text-xs text-slate-400">optional</span>
+        </div>
+      </section>
+
+      {/* weekly therapies */}
+      {catalog.therapies.length > 0 && (
+        <section>
+          <div className="mb-2 px-1">
+            <h2 className="section-title">Weekly therapies — done today?</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {catalog.therapies.map((t) => {
+              const on = day.therapies.includes(t.id);
+              return (
+                <button
+                  key={t.id}
+                  onClick={() => toggleTherapy(t.id)}
+                  className={`rounded-full px-3.5 py-2 text-sm font-medium transition active:scale-95 ${
+                    on
+                      ? 'bg-brand-600 text-white shadow-softer'
+                      : 'bg-white text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700'
+                  }`}
+                >
+                  {on ? '✓ ' : ''}
+                  {t.name}
+                </button>
+              );
+            })}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}

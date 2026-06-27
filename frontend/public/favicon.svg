@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="WellNest">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#69a487"/>
+      <stop offset="1" stop-color="#3c6f59"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#g)"/>
+  <path d="M256 412 C 150 330, 98 272, 98 202 C 98 152, 138 118, 186 118 C 218 118, 244 136, 256 162 C 268 136, 294 118, 326 118 C 374 118, 414 152, 414 202 C 414 272, 362 330, 256 412 Z"
+        fill="#faf7f2"/>
+</svg>
