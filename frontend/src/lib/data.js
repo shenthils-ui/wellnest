@@ -123,6 +123,21 @@ export const getCorrelationScan = (from, to) =>
   apiGet(`/api/insights/correlation/scan?from=${from}&to=${to}`);
 export const getStreaks = () => apiGet('/api/insights/streaks');
 export const getOverview = (from, to) => apiGet(`/api/insights/overview?from=${from}&to=${to}`);
+export const getCalendar = (from, to) => apiGet(`/api/insights/calendar?from=${from}&to=${to}`);
+
+// Calendar for a whole year, cached so History still shows (stale) data offline.
+export async function loadCalendarYear(year) {
+  const from = `${year}-01-01`;
+  const to = `${year}-12-31`;
+  try {
+    const r = await apiGet(`/api/insights/calendar?from=${from}&to=${to}`);
+    await cacheSet(`cal:${year}`, r);
+    return { data: r, fromCache: false };
+  } catch (e) {
+    const cached = await cacheGet(`cal:${year}`);
+    return { data: cached || { perDay: [] }, fromCache: true };
+  }
+}
 
 /* ------------------------------- BACKUP ------------------------------- */
 export const exportJsonUrl = () => '/api/export/json';

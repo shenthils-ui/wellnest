@@ -221,6 +221,59 @@ router.get('/correlation/scan', (req, res) => {
   res.json({ from, to, minDays, findings: findings.slice(0, 12) });
 });
 
+/* ------------------------------ CALENDAR ------------------------------ */
+// GET /api/insights/calendar?from=&to=
+// Per-day completion % + per-metric daily averages for the heatmap.
+router.get('/calendar', (req, res) => {
+  const { from, to } = getRange(req, 42);
+  const days = dateRange(from, to);
+  const today = todayStr();
+  const activities = db.prepare('SELECT * FROM activities').all();
+  const logMap = loadLogMap(from, to);
+
+  const symRows = db
+    .prepare(
+      `SELECT date, metric_id, ROUND(AVG(value),1) v FROM symptom_entries
+       WHERE date BETWEEN ? AND ? GROUP BY date, metric_id`
+    )
+    .all(from, to);
+  const symByDate = {};
+  symRows.forEach((r) => {
+    (symByDate[r.date] || (symByDate[r.date] = {}))[r.metric_id] = r.v;
+  });
+
+  const loggedRows = db
+    .prepare(
+      `SELECT date FROM activity_logs WHERE date BETWEEN ? AND ?
+       UNION SELECT date FROM symptom_entries WHERE date BETWEEN ? AND ?
+       UNION SELECT date FROM daily_notes WHERE date BETWEEN ? AND ?`
+    )
+    .all(from, to, from, to, from, to);
+  const logged = new Set(loggedRows.map((r) => r.date));
+
+  const perDay = days.map((d) => {
+    let expected = 0;
+    let done = 0;
+    for (const a of activities) {
+      if (!isExpectedOn(a, d)) continue;
+      const s = logMap.get(`${a.id}|${d}`);
+      if (s === 'NOT_SCHEDULED') continue;
+      expected += 1;
+      if (s === 'DONE') done += 1;
+    }
+    const pct = expected > 0 ? Math.round((done / expected) * 100) : null;
+    return {
+      date: d,
+      completionPct: d > today ? null : pct,
+      done,
+      expected,
+      logged: logged.has(d),
+      metrics: symByDate[d] || {},
+    };
+  });
+  res.json({ from, to, perDay });
+});
+
 /* ------------------------- STREAKS / CONSISTENCY ---------------------- */
 // GET /api/insights/streaks?windowDays=
 router.get('/streaks', (req, res) => {
