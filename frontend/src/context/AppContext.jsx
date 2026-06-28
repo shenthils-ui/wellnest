@@ -1,6 +1,7 @@
-import { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { loadCatalog } from '../lib/data';
 import { subscribeSync, startSync } from '../lib/sync';
+import { startReminderScheduler } from '../lib/reminders';
 
 const AppContext = createContext(null);
 
@@ -31,11 +32,21 @@ export function AppProvider({ children }) {
     return c;
   }, []);
 
+  // keep a live reference to activities for the reminder scheduler
+  const catalogRef = useRef(catalog);
+  useEffect(() => {
+    catalogRef.current = catalog;
+  }, [catalog]);
+
   useEffect(() => {
     refreshCatalog();
     startSync();
     const unsub = subscribeSync(setSync);
-    return unsub;
+    const stopReminders = startReminderScheduler(() => catalogRef.current.activities);
+    return () => {
+      unsub();
+      stopReminders && stopReminders();
+    };
   }, [refreshCatalog]);
 
   useEffect(() => {

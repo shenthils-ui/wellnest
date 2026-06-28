@@ -9,17 +9,18 @@ import Today from './pages/Today';
 const History = lazy(() => import('./pages/History'));
 const Insights = lazy(() => import('./pages/Insights'));
 const Settings = lazy(() => import('./pages/Settings'));
+const DoctorReport = lazy(() => import('./pages/DoctorReport'));
 
 function PageFallback() {
   return (
-    <div className="space-y-3 pt-2">
+    <div className="mx-auto max-w-md space-y-3 px-3 pt-4">
       <div className="card h-28 animate-pulse" />
       <div className="card h-48 animate-pulse" />
     </div>
   );
 }
 
-export default function App() {
+function MainLayout() {
   return (
     <div className="min-h-full">
       <div className="mx-auto max-w-md px-3">
@@ -38,5 +39,22 @@ export default function App() {
       </div>
       <BottomNav />
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      {/* standalone, chrome-less, print-friendly report */}
+      <Route
+        path="/report"
+        element={
+          <Suspense fallback={<PageFallback />}>
+            <DoctorReport />
+          </Suspense>
+        }
+      />
+      <Route path="/*" element={<MainLayout />} />
+    </Routes>
   );
 }

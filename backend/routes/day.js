@@ -175,6 +175,16 @@ router.put('/day-meta', (req, res) => {
 });
 
 /* --------------------------- THERAPY LOGS ----------------------------- */
+// GET /api/therapy-logs?from=&to=  -> completions in range (for reports)
+router.get('/therapy-logs', (req, res) => {
+  const from = isValidDate(req.query.from) ? req.query.from : '0000-01-01';
+  const to = isValidDate(req.query.to) ? req.query.to : '9999-12-31';
+  const rows = db
+    .prepare('SELECT therapy_id, date FROM therapy_logs WHERE date BETWEEN ? AND ? ORDER BY date')
+    .all(from, to);
+  res.json(rows);
+});
+
 // POST /api/therapy-logs  { therapy_id, date }
 router.post('/therapy-logs', (req, res) => {
   const b = req.body || {};

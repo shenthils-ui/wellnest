@@ -123,6 +123,7 @@ export const getCorrelationScan = (from, to) =>
   apiGet(`/api/insights/correlation/scan?from=${from}&to=${to}`);
 export const getStreaks = () => apiGet('/api/insights/streaks');
 export const getOverview = (from, to) => apiGet(`/api/insights/overview?from=${from}&to=${to}`);
+export const getTherapyLogs = (from, to) => apiGet(`/api/therapy-logs?from=${from}&to=${to}`);
 export const getCalendar = (from, to) => apiGet(`/api/insights/calendar?from=${from}&to=${to}`);
 
 // Calendar for a whole year, cached so History still shows (stale) data offline.
