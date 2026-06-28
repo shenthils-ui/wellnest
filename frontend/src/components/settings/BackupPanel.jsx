@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useApp } from '../../context/AppContext';
 import { importBackup } from '../../lib/data';
+import DriveBackup from './DriveBackup';
 import { DownloadIcon, UploadIcon, PrinterIcon } from '../Icons';
 
 export default function BackupPanel() {
@@ -73,10 +74,12 @@ export default function BackupPanel() {
           <Download href="/api/export/csv?type=symptoms">Symptom log (CSV)</Download>
         </div>
         <p className="mt-2 px-1 text-xs text-slate-400">
-          Save the JSON file about once a week. To keep a copy in the cloud, open
-          Google Drive and upload that file — your data stays private; only this
-          backup copy goes where you put it.
+          Save the JSON file about once a week. Prefer one tap? Set up Google Drive below.
         </p>
+      </div>
+
+      <div className="rounded-xl border border-slate-100 p-3 dark:border-slate-800">
+        <DriveBackup />
       </div>
 
       <div>

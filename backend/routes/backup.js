@@ -5,37 +5,9 @@
 const express = require('express');
 const { db } = require('../db');
 const { isValidDate } = require('../helpers');
+const { dumpAll, TABLES } = require('../dump');
 
 const router = express.Router();
-
-const TABLES = [
-  'activities',
-  'metrics',
-  'therapies',
-  'trackers',
-  'tracker_options',
-  'activity_logs',
-  'symptom_entries',
-  'daily_notes',
-  'therapy_logs',
-  'tracker_logs',
-  'library_entries',
-  'period_days',
-  'settings',
-];
-
-function dumpAll() {
-  const data = {};
-  for (const t of TABLES) {
-    data[t] = db.prepare(`SELECT * FROM ${t}`).all();
-  }
-  return {
-    app: 'WellNest',
-    version: 1,
-    exportedAt: new Date().toISOString(),
-    data,
-  };
-}
 
 // GET /api/export/json -> full backup
 router.get('/export/json', (req, res) => {

@@ -156,10 +156,34 @@ Your data is one file on the PC:
 - **Restore:** Settings → **Backup & export** → **Import a JSON backup**, choose a
   previously saved file. *Importing replaces all current data* with the backup.
 - **Doctor report:** Settings → **Backup & export** → **Doctor report** opens a
-  clean, printable summary for a date range — use your browser’s Print → “Save as
-  PDF” for appointments.
+  clean summary for a date range. From there you can **Download PDF**, **Save to
+  Drive** (if Google Drive is connected), or **Print**. (For raw numbers in Excel,
+  use the **CSV** exports above instead.)
 - **Copy the file directly:** you can also just copy `wellnest.db` to back it up,
   and copy it back to restore (do this while WellNest is stopped).
+
+### One‑tap Google Drive backup (optional)
+
+Instead of saving by hand, WellNest can upload a backup file to **your own** Google
+Drive. The app stays local — only the backup file goes to your Drive — and you sign
+in **once on the PC** (the phone then just triggers the upload). One‑time setup:
+
+1. Open **console.cloud.google.com** and create a project.
+2. **APIs & Services → Library →** enable the **Google Drive API**.
+3. **OAuth consent screen →** External → fill the basics → **Publish** the app
+   (so the connection doesn’t expire weekly). The scope used is the minimal
+   `drive.file` (the app only ever sees files it creates).
+4. **Credentials → Create credentials → OAuth client ID → Web application.**
+5. Under **Authorized redirect URIs**, add exactly:
+   `http://localhost:3001/api/drive/callback`
+6. Copy the **Client ID** and **Client secret**.
+7. In WellNest (on the PC): **Settings → Backup & export → Set up Google Drive**,
+   paste them, **Save**, then **Connect Google Drive** and approve. (If you see an
+   “unverified app” screen, that’s your own app — Advanced → continue.)
+
+After that: **“Back up to Drive now”** works from any device, and you can switch on
+**automatic weekly** Drive backups. Secrets/tokens are stored locally and are
+**never** included in the backup file itself.
 
 ## 9. Development mode
 

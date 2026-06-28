@@ -9,8 +9,9 @@ import {
   getTrackerSummary,
 } from '../lib/data';
 import { todayISO, addDays, prettyDate } from '../lib/date';
+import { reportPdfUrl, reportToDrive } from '../lib/data';
 import SymptomTrendChart from '../components/SymptomTrendChart';
-import { PrinterIcon, ChevronLeft } from '../components/Icons';
+import { PrinterIcon, ChevronLeft, DownloadIcon } from '../components/Icons';
 
 // A clean, print-friendly summary for medical appointments. Ctrl/Cmd-P → PDF.
 export default function DoctorReport() {
@@ -22,6 +23,21 @@ export default function DoctorReport() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [driveBusy, setDriveBusy] = useState(false);
+  const [driveMsg, setDriveMsg] = useState(null);
+
+  const saveToDrive = async () => {
+    setDriveBusy(true);
+    setDriveMsg(null);
+    try {
+      const r = await reportToDrive(from, to);
+      setDriveMsg({ ok: true, text: 'Saved to Google Drive ✓', link: r.link });
+    } catch {
+      setDriveMsg({ ok: false, text: 'Connect Google Drive first (Settings → Backup & export).' });
+    } finally {
+      setDriveBusy(false);
+    }
+  };
 
   useEffect(() => {
     let live = true;
@@ -54,7 +70,7 @@ export default function DoctorReport() {
   return (
     <div className="min-h-full bg-white text-slate-800 dark:bg-white dark:text-slate-800">
       {/* toolbar (not printed) */}
-      <div className="no-print sticky top-0 z-10 flex items-center justify-between gap-2 border-b bg-white px-4 py-3">
+      <div className="no-print sticky top-0 z-10 flex flex-wrap items-center justify-between gap-2 border-b bg-white px-4 py-3">
         <button onClick={() => navigate('/settings')} className="flex items-center gap-1 text-sm font-medium text-slate-600">
           <ChevronLeft width={18} height={18} /> Back
         </button>
@@ -63,10 +79,23 @@ export default function DoctorReport() {
           <span className="text-slate-400">→</span>
           <input type="date" value={to} min={from} max={to0} onChange={(e) => setTo(e.target.value)} className="rounded-lg border px-2 py-1" />
         </div>
-        <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white">
-          <PrinterIcon width={16} height={16} /> Print
-        </button>
+        <div className="flex items-center gap-1.5">
+          <a href={reportPdfUrl(from, to)} download className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white">
+            <DownloadIcon width={16} height={16} /> PDF
+          </a>
+          <button onClick={saveToDrive} disabled={driveBusy} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200 disabled:opacity-50">
+            {driveBusy ? '…' : '☁️'} Drive
+          </button>
+          <button onClick={() => window.print()} title="Print" className="rounded-lg px-2 py-1.5 text-slate-500 ring-1 ring-slate-200">
+            <PrinterIcon width={16} height={16} />
+          </button>
+        </div>
       </div>
+      {driveMsg && (
+        <div className={`no-print px-4 py-2 text-center text-sm ${driveMsg.ok ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'}`}>
+          {driveMsg.text} {driveMsg.link && <a className="underline" href={driveMsg.link} target="_blank" rel="noreferrer">open in Drive</a>}
+        </div>
+      )}
 
       <div className="mx-auto max-w-2xl px-6 py-6">
         {/* header */}
