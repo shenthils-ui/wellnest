@@ -19,13 +19,13 @@ if errorlevel 1 (
 
 if not exist "backend\node_modules" (
   echo Installing backend dependencies ^(first run only, this can take a minute^)...
-  call npm --prefix backend install
+  call npm --prefix backend install --no-audit --no-fund
   if errorlevel 1 goto setup_error
 )
 
 if not exist "frontend\node_modules" (
   echo Installing frontend dependencies ^(first run only^)...
-  call npm --prefix frontend install
+  call npm --prefix frontend install --no-audit --no-fund
   if errorlevel 1 goto setup_error
 )
 
