@@ -12,8 +12,8 @@ if errorlevel 1 (
 )
 
 echo Installing/updating dependencies...
-call npm --prefix backend install
-call npm --prefix frontend install
+call npm --prefix backend install --no-audit --no-fund
+call npm --prefix frontend install --no-audit --no-fund
 
 echo.
 echo Building the optimized app...
