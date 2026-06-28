@@ -18,7 +18,7 @@ function initialTheme() {
 }
 
 export function AppProvider({ children }) {
-  const [catalog, setCatalog] = useState({ activities: [], metrics: [], therapies: [] });
+  const [catalog, setCatalog] = useState({ activities: [], metrics: [], therapies: [], trackers: [] });
   const [catalogLoaded, setCatalogLoaded] = useState(false);
   const [catalogOffline, setCatalogOffline] = useState(false);
   const [theme, setThemeState] = useState(initialTheme);

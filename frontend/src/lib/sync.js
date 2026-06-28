@@ -47,6 +47,11 @@ function send(item) {
       return apiPost('/api/therapy-logs', { therapy_id: p.therapy_id, date: p.date });
     case 'therapy_off':
       return apiDelete('/api/therapy-logs', { therapy_id: p.therapy_id, date: p.date });
+    case 'tracker_set':
+      return apiPut('/api/tracker-log', {
+        tracker_id: p.tracker_id, option_id: p.option_id, date: p.date,
+        selected: p.selected, single: p.single, intensity: p.intensity,
+      });
     case 'request': // generic (catalog/settings CRUD)
       if (p.method === 'POST') return apiPost(p.path, p.body);
       if (p.method === 'PUT') return apiPut(p.path, p.body);
@@ -162,6 +167,7 @@ export async function overlayDay(date, day) {
     logs: { ...(day.logs || {}) },
     symptoms: { ...(day.symptoms || {}) },
     therapies: [...(day.therapies || [])],
+    trackers: JSON.parse(JSON.stringify(day.trackers || {})),
     notes: day.notes ?? null,
     cycle_day: day.cycle_day ?? null,
     date,
@@ -201,6 +207,15 @@ export async function overlayDay(date, day) {
       case 'therapy_off':
         d.therapies = d.therapies.filter((t) => t !== p.therapy_id);
         break;
+      case 'tracker_set': {
+        const t = String(p.tracker_id);
+        if (p.single) d.trackers[t] = {};
+        if (!d.trackers[t]) d.trackers[t] = {};
+        if (p.selected === false) delete d.trackers[t][p.option_id];
+        else d.trackers[t][p.option_id] = { intensity: p.intensity ?? null };
+        if (Object.keys(d.trackers[t]).length === 0) delete d.trackers[t];
+        break;
+      }
       default:
         break;
     }

@@ -5,6 +5,7 @@ import { useInstallPrompt } from '../hooks/useInstallPrompt';
 import RemindersPanel from '../components/settings/RemindersPanel';
 import ActivitiesManager from '../components/settings/ActivitiesManager';
 import MetricsManager from '../components/settings/MetricsManager';
+import TrackersManager from '../components/settings/TrackersManager';
 import TherapiesManager from '../components/settings/TherapiesManager';
 import BackupPanel from '../components/settings/BackupPanel';
 import HelpGuide from '../components/settings/HelpGuide';
@@ -67,8 +68,12 @@ export default function Settings() {
         <ActivitiesManager />
       </Section>
 
-      <Section icon={SparkleIcon} title="Symptoms tracked" subtitle="Customise what you measure">
+      <Section icon={SparkleIcon} title="Symptoms tracked" subtitle="Customise the 1–10 measures">
         <MetricsManager />
+      </Section>
+
+      <Section icon={ListIcon} title="Food & body trackers" subtitle="Ingredients, mood, pain… tap-to-log chips">
+        <TrackersManager />
       </Section>
 
       <Section icon={HeartIcon} title="Weekly therapies">

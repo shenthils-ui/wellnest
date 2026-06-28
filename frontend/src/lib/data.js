@@ -11,6 +11,7 @@ const emptyDay = (date) => ({
   logs: {},
   symptoms: {},
   therapies: [],
+  trackers: {},
   notes: null,
   cycle_day: null,
 });
@@ -18,18 +19,19 @@ const emptyDay = (date) => ({
 /* ------------------------------- CATALOG ------------------------------ */
 export async function loadCatalog() {
   try {
-    const [activities, metrics, therapies] = await Promise.all([
+    const [activities, metrics, therapies, trackers] = await Promise.all([
       apiGet('/api/activities'),
       apiGet('/api/metrics'),
       apiGet('/api/therapies'),
+      apiGet('/api/trackers'),
     ]);
-    const catalog = { activities, metrics, therapies };
+    const catalog = { activities, metrics, therapies, trackers };
     await cacheSet('catalog', catalog);
     return { catalog, fromCache: false };
   } catch (e) {
     const cached = await cacheGet('catalog');
-    if (cached) return { catalog: cached, fromCache: true };
-    return { catalog: { activities: [], metrics: [], therapies: [] }, fromCache: true };
+    if (cached) return { catalog: { trackers: [], ...cached }, fromCache: true };
+    return { catalog: { activities: [], metrics: [], therapies: [], trackers: [] }, fromCache: true };
   }
 }
 
@@ -77,6 +79,11 @@ export function queueTherapy(date, therapy_id, on) {
     dedupeKey: `ther:${date}:${therapy_id}`,
   });
 }
+export function queueSetTracker(date, tracker_id, option_id, selected, { single = false, intensity = null } = {}) {
+  // single-select dedupes by tracker (replacing the choice); multi by option
+  const dedupeKey = single ? `trk:${date}:${tracker_id}` : `trk:${date}:${tracker_id}:${option_id}`;
+  return enqueue('tracker_set', { date, tracker_id, option_id, selected, single, intensity }, { dedupeKey });
+}
 
 /* -------------------- CATALOG / SETTINGS MUTATIONS -------------------- */
 // These are done at home on the PC; they go straight to the server (and throw
@@ -102,6 +109,32 @@ export async function updateMetric(id, body) {
 export async function deleteMetric(id, hard = false) {
   return apiDelete(`/api/metrics/${id}${hard ? '?hard=1' : ''}`);
 }
+export async function createTracker(body) {
+  return apiPost('/api/trackers', body);
+}
+export async function updateTracker(id, body) {
+  return apiPut(`/api/trackers/${id}`, body);
+}
+export async function deleteTracker(id, hard = false) {
+  return apiDelete(`/api/trackers/${id}${hard ? '?hard=1' : ''}`);
+}
+export async function reorderTrackers(order) {
+  return apiPost('/api/trackers/reorder', { order });
+}
+export async function addTrackerOption(trackerId, label, emoji) {
+  return apiPost(`/api/trackers/${trackerId}/options`, { label, emoji });
+}
+export async function updateTrackerOption(trackerId, optionId, body) {
+  return apiPut(`/api/trackers/${trackerId}/options/${optionId}`, body);
+}
+export async function deleteTrackerOption(trackerId, optionId, hard = false) {
+  return apiDelete(`/api/trackers/${trackerId}/options/${optionId}${hard ? '?hard=1' : ''}`);
+}
+export const getLookback = (params) => {
+  const qs = new URLSearchParams(params).toString();
+  return apiGet(`/api/insights/lookback?${qs}`);
+};
+
 export async function createTherapy(body) {
   return apiPost('/api/therapies', body);
 }

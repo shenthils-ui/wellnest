@@ -10,10 +10,15 @@ installable phone app (PWA) that runs entirely on your own Windows PC.
   and gentle “what seems to help?” correlations.
 - **Works on the phone, even offline.** Entries made away from home are saved on
   the phone and sync back to the PC automatically when you’re home again.
-- **Fully editable.** Every activity, symptom and therapy can be added, renamed,
-  reordered or retired right in the app (**Settings → Manage routine**) — so it
-  adapts as the routine changes. A built‑in guide (**Settings → How to use
-  WellNest**) walks through everyday use, including adding a new item.
+- **Fully editable.** Every activity, symptom, therapy and tap‑to‑log “chip”
+  (food ingredients, cooking style, mood, pain spots, bowel…) can be added,
+  renamed, reordered or retired right in the app — so it adapts as the routine
+  changes. A built‑in guide (**Settings → How to use WellNest**) walks through
+  everyday use, including adding a new item.
+- **Food, mood & body, the easy way.** Set each option list once, then just tap
+  chips daily (no typing). The **Look back** insight then shows what tended to
+  appear in the days before tougher days — observational patterns to explore with
+  a doctor, never a diagnosis.
 
 > WellNest is a personal tracking tool, not a medical device. Any patterns it
 > shows are **observational, not medical advice.**
@@ -77,6 +82,16 @@ With `start.bat` running on the PC and both devices on the same Wi‑Fi:
    - **Android (Chrome):** tap the **⋮** menu → **Install app** / **Add to Home
      screen** (WellNest also shows a little “Install” banner you can tap).
 4. Open WellNest from the new home‑screen icon. Done — it now works like an app.
+
+> **Phone can’t load the page at all?** (Common on Android while an iPhone works.)
+> This is the Windows Firewall blocking the connection. Double‑click
+> **`allow-firewall.bat`** (it will ask for administrator permission) to open the
+> port, then reload on the phone. Also make sure the phone is on the **same
+> Wi‑Fi** and **not** a separate “Guest” network.
+
+> **Want it to start by itself?** Double‑click **`install-autostart.bat`** once and
+> WellNest launches (minimized) every time you sign in to Windows. Undo it anytime
+> with **`uninstall-autostart.bat`**.
 
 > Tip: bookmark `http://YOUR-PC-IP:3001`. Home Wi‑Fi addresses can change after a
 > router restart; if the app can’t connect later, re‑check the IP (section 5).

@@ -31,24 +31,51 @@ export default function BackupPanel() {
     }
   };
 
-  const Download = ({ href, children }) => (
-    <a href={href} className="btn-subtle w-full justify-start" download>
+  const [lastBackup, setLastBackup] = useState(() => localStorage.getItem('wellnest-last-backup'));
+  const daysSince = lastBackup
+    ? Math.floor((Date.now() - new Date(lastBackup).getTime()) / 86400000)
+    : null;
+  const overdue = daysSince === null || daysSince >= 7;
+  const markBackedUp = () => {
+    const now = new Date().toISOString();
+    localStorage.setItem('wellnest-last-backup', now);
+    setLastBackup(now);
+  };
+
+  const Download = ({ href, children, onClick }) => (
+    <a href={href} className="btn-subtle w-full justify-start" download onClick={onClick}>
       <DownloadIcon width={17} height={17} /> {children}
     </a>
   );
 
   return (
     <div className="space-y-4">
+      <div
+        className={`rounded-xl px-3.5 py-2.5 text-xs ${
+          overdue
+            ? 'bg-amber-50 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300'
+            : 'bg-brand-50 text-brand-700 dark:bg-slate-800/60 dark:text-brand-200'
+        }`}
+      >
+        {lastBackup
+          ? overdue
+            ? `It's been ${daysSince} days since your last backup — a good time to save one. 🛟`
+            : `Last backup: ${daysSince === 0 ? 'today' : `${daysSince} day(s) ago`} ✓`
+          : 'No backup saved yet — saving one now is a good idea. 🛟'}
+      </div>
+
       <div>
         <div className="mb-1.5 px-1 text-xs font-semibold uppercase tracking-wide text-slate-400">Backup</div>
         <div className="space-y-2">
-          <Download href="/api/export/json">Full backup (JSON) — for restoring</Download>
+          <Download href="/api/export/json" onClick={markBackedUp}>Save backup (JSON) — for restoring</Download>
           <Download href="/api/export/csv?type=daily">Daily summary (CSV)</Download>
           <Download href="/api/export/csv?type=activities">Routine log (CSV)</Download>
           <Download href="/api/export/csv?type=symptoms">Symptom log (CSV)</Download>
         </div>
         <p className="mt-2 px-1 text-xs text-slate-400">
-          Tip: save a JSON backup somewhere safe about once a week.
+          Save the JSON file about once a week. To keep a copy in the cloud, open
+          Google Drive and upload that file — your data stays private; only this
+          backup copy goes where you put it.
         </p>
       </div>
 

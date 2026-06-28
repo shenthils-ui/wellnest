@@ -396,4 +396,147 @@ router.get('/overview', (req, res) => {
   });
 });
 
+/* ------------------------------ LOOK BACK ----------------------------- */
+// "What came before the tougher days?" Compares how often each food / activity
+// appeared in the lag-day window leading up to tougher days vs better days.
+// Target is either a symptom metric, or a tracker option (e.g. Mood = Low).
+// GET /api/insights/lookback?metric_id=&tracker_id=&option_id=&lag=&from=&to=
+router.get('/lookback', (req, res) => {
+  const { from, to } = getRange(req, 90);
+  const lag = Math.min(7, Math.max(0, parseInt(req.query.lag, 10) || 3));
+  const days = dateRange(from, to);
+  const today = todayStr();
+
+  // --- decide tough vs better target days ---
+  let toughDays = [];
+  let betterDays = [];
+  let targetLabel = '';
+
+  if (req.query.tracker_id && req.query.option_id) {
+    const tid = Number(req.query.tracker_id);
+    const oid = Number(req.query.option_id);
+    const opt = db.prepare('SELECT label FROM tracker_options WHERE id = ?').get(oid);
+    const trk = db.prepare('SELECT name FROM trackers WHERE id = ?').get(tid);
+    targetLabel = `${trk ? trk.name : 'Tracker'} = ${opt ? opt.label : oid}`;
+    const rows = db
+      .prepare('SELECT date FROM tracker_logs WHERE tracker_id = ? AND option_id = ? AND date BETWEEN ? AND ?')
+      .all(tid, oid, from, to);
+    const onDays = new Set(rows.map((r) => r.date));
+    // "better" = days that had any logging but not this option
+    const loggedRows = db
+      .prepare(
+        `SELECT DISTINCT date FROM activity_logs WHERE date BETWEEN ? AND ?
+         UNION SELECT DISTINCT date FROM tracker_logs WHERE date BETWEEN ? AND ?
+         UNION SELECT DISTINCT date FROM symptom_entries WHERE date BETWEEN ? AND ?`
+      )
+      .all(from, to, from, to, from, to);
+    for (const r of loggedRows) {
+      if (r.date > today) continue;
+      if (onDays.has(r.date)) toughDays.push(r.date);
+      else betterDays.push(r.date);
+    }
+  } else {
+    const metricId = Number(req.query.metric_id);
+    const metric = db.prepare('SELECT * FROM metrics WHERE id = ?').get(metricId);
+    if (!metric) return res.status(400).json({ error: 'metric_id or tracker_id+option_id required' });
+    targetLabel = metric.name;
+    const sym = loadSymptomMap(from, to);
+    const valued = [];
+    for (const d of days) {
+      if (d > today) continue;
+      const v = sym.get(`${metricId}|${d}`);
+      if (v !== undefined) valued.push({ date: d, v });
+    }
+    if (valued.length < 4) {
+      return res.json({
+        from, to, lag, target: targetLabel, enoughData: false,
+        message: 'Not enough days logged yet — keep tracking and check back in a couple of weeks.',
+        worseBefore: [], betterBefore: [],
+      });
+    }
+    const sorted = [...valued].map((x) => x.v).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)];
+    // worse depends on direction: for 'low' good (pain/stress) higher = tougher
+    const isTough = (v) => (metric.good_direction === 'low' ? v > median : v < median);
+    for (const x of valued) (isTough(x.v) ? toughDays : betterDays).push(x.date);
+  }
+
+  if (toughDays.length < 2 || betterDays.length < 2) {
+    return res.json({
+      from, to, lag, target: targetLabel, enoughData: false,
+      message: 'Not enough contrast in the data yet — a few more weeks will make this clearer.',
+      worseBefore: [], betterBefore: [],
+    });
+  }
+
+  // --- antecedent items present per date (activities DONE + tracker options) ---
+  const actByDate = new Map(); // date -> Set(item key)
+  const addItem = (date, key) => {
+    if (!actByDate.has(date)) actByDate.set(date, new Set());
+    actByDate.get(date).add(key);
+  };
+  const labels = {}; // key -> display label
+
+  db.prepare("SELECT activity_id, date FROM activity_logs WHERE status = 'DONE' AND date BETWEEN ? AND ?")
+    .all(addDays(from, -lag), to)
+    .forEach((r) => addItem(r.date, `act:${r.activity_id}`));
+  db.prepare('SELECT name, id FROM activities').all().forEach((a) => { labels[`act:${a.id}`] = a.name; });
+
+  db.prepare('SELECT option_id, date FROM tracker_logs WHERE date BETWEEN ? AND ?')
+    .all(addDays(from, -lag), to)
+    .forEach((r) => addItem(r.date, `opt:${r.option_id}`));
+  db.prepare('SELECT o.id, o.label, t.name tname FROM tracker_options o JOIN trackers t ON t.id = o.tracker_id')
+    .all()
+    .forEach((o) => { labels[`opt:${o.id}`] = `${o.label} (${o.tname})`; });
+
+  // presence of an item in the window [D-lag, D]
+  function windowPresence(targetDays) {
+    const counts = new Map();
+    for (const D of targetDays) {
+      const seen = new Set();
+      for (let k = 0; k <= lag; k++) {
+        const wd = addDays(D, -k);
+        const items = actByDate.get(wd);
+        if (items) for (const it of items) seen.add(it);
+      }
+      for (const it of seen) counts.set(it, (counts.get(it) || 0) + 1);
+    }
+    return counts;
+  }
+
+  const toughCounts = windowPresence(toughDays);
+  const betterCounts = windowPresence(betterDays);
+  const allKeys = new Set([...toughCounts.keys(), ...betterCounts.keys()]);
+
+  const findings = [];
+  for (const key of allKeys) {
+    const tRate = (toughCounts.get(key) || 0) / toughDays.length;
+    const bRate = (betterCounts.get(key) || 0) / betterDays.length;
+    findings.push({
+      key,
+      label: labels[key] || key,
+      toughPct: Math.round(tRate * 100),
+      betterPct: Math.round(bRate * 100),
+      diff: Math.round((tRate - bRate) * 100),
+      toughCount: toughCounts.get(key) || 0,
+      betterCount: betterCounts.get(key) || 0,
+    });
+  }
+  const meaningful = findings.filter((f) => f.toughCount + f.betterCount >= 3 && Math.abs(f.diff) >= 15);
+  const worseBefore = meaningful.filter((f) => f.diff > 0).sort((a, b) => b.diff - a.diff).slice(0, 8);
+  const betterBefore = meaningful.filter((f) => f.diff < 0).sort((a, b) => a.diff - b.diff).slice(0, 8);
+
+  res.json({
+    from, to, lag, target: targetLabel, enoughData: true,
+    toughDays: toughDays.length,
+    betterDays: betterDays.length,
+    worseBefore,
+    betterBefore,
+    disclaimer:
+      'Observational only. This shows which things happened more often in the ' +
+      `${lag} day(s) before tougher days — it suggests patterns to explore, not causes. ` +
+      'It is not medical advice.',
+  });
+});
+
 module.exports = router;

@@ -12,10 +12,13 @@ const TABLES = [
   'activities',
   'metrics',
   'therapies',
+  'trackers',
+  'tracker_options',
   'activity_logs',
   'symptom_entries',
   'daily_notes',
   'therapy_logs',
+  'tracker_logs',
   'settings',
 ];
 
@@ -148,6 +151,8 @@ router.post('/import', (req, res) => {
     const tx = db.transaction(() => {
       // Clear in FK-safe order (children first).
       const clearOrder = [
+        'tracker_logs',
+        'tracker_options',
         'therapy_logs',
         'symptom_entries',
         'activity_logs',
@@ -155,6 +160,7 @@ router.post('/import', (req, res) => {
         'activities',
         'metrics',
         'therapies',
+        'trackers',
         'settings',
       ];
       for (const t of clearOrder) db.prepare(`DELETE FROM ${t}`).run();
@@ -175,11 +181,14 @@ router.post('/import', (req, res) => {
 
       insertRows('metrics', data.metrics, ['id', 'key', 'name', 'good_direction', 'min_value', 'max_value', 'time_hint', 'display_order', 'active']);
       insertRows('therapies', data.therapies, ['id', 'name', 'cadence_days', 'display_order', 'active']);
+      insertRows('trackers', data.trackers, ['id', 'name', 'kind', 'section', 'has_intensity', 'icon', 'hint', 'display_order', 'active']);
+      insertRows('tracker_options', data.tracker_options, ['id', 'tracker_id', 'label', 'emoji', 'display_order', 'active']);
       insertRows('activities', data.activities, ['id', 'name', 'time_block', 'is_husband_task', 'expected_days', 'display_order', 'active', 'reminder_enabled', 'reminder_time', 'created_at', 'updated_at']);
       insertRows('activity_logs', data.activity_logs, ['id', 'activity_id', 'date', 'status', 'updated_at']);
       insertRows('symptom_entries', data.symptom_entries, ['id', 'metric_id', 'date', 'value', 'created_at']);
       insertRows('daily_notes', data.daily_notes, ['date', 'notes', 'cycle_day', 'updated_at']);
       insertRows('therapy_logs', data.therapy_logs, ['id', 'therapy_id', 'date', 'created_at']);
+      insertRows('tracker_logs', data.tracker_logs, ['id', 'tracker_id', 'option_id', 'date', 'intensity', 'created_at']);
       insertRows('settings', data.settings, ['key', 'value']);
     });
     tx();

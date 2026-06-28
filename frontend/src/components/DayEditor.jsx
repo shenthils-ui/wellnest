@@ -3,10 +3,12 @@ import { useApp } from '../context/AppContext';
 import { useDay } from '../hooks/useDay';
 import { dayCompletion, groupByBlock } from '../lib/selectors';
 import { ENCOURAGEMENTS } from '../lib/constants';
-import { isFuture } from '../lib/date';
+import { isFuture, addDays } from '../lib/date';
+import { addTrackerOption, loadDay } from '../lib/data';
 import ProgressRing from './ProgressRing';
 import ActivityRow from './ActivityRow';
 import SymptomScale from './SymptomScale';
+import ChipTracker from './ChipTracker';
 import { SparkleIcon } from './Icons';
 
 function encouragementFor(date, percent) {
@@ -17,8 +19,41 @@ function encouragementFor(date, percent) {
 }
 
 export default function DayEditor({ date }) {
-  const { catalog } = useApp();
-  const { day, loading, setLog, setSymptom, addSymptom, clearSymptom, setMeta, toggleTherapy } = useDay(date);
+  const { catalog, refreshCatalog } = useApp();
+  const { day, loading, setLog, setSymptom, addSymptom, clearSymptom, setMeta, toggleTherapy, setTracker } = useDay(date);
+
+  const foodTrackers = useMemo(
+    () => (catalog.trackers || []).filter((t) => t.section === 'food'),
+    [catalog.trackers]
+  );
+  const feelingTrackers = useMemo(
+    () => (catalog.trackers || []).filter((t) => t.section === 'feeling'),
+    [catalog.trackers]
+  );
+
+  const onAddOption = async (trackerId, label) => {
+    await addTrackerOption(trackerId, label);
+    await refreshCatalog();
+  };
+
+  // Copy yesterday's food chips onto today — handy for repeat meals.
+  const [copying, setCopying] = useState(false);
+  const copyYesterdayFood = async () => {
+    setCopying(true);
+    try {
+      const { day: prev } = await loadDay(addDays(date, -1));
+      const prevTrk = prev.trackers || {};
+      for (const t of foodTrackers) {
+        const sel = prevTrk[t.id] || prevTrk[String(t.id)];
+        if (!sel) continue;
+        for (const [optId, info] of Object.entries(sel)) {
+          setTracker(t, Number(optId), { selected: true, intensity: info?.intensity ?? null });
+        }
+      }
+    } finally {
+      setCopying(false);
+    }
+  };
 
   const completion = useMemo(
     () => (day ? dayCompletion(catalog.activities, date, day.logs) : { expected: 0, done: 0, percent: null }),
@@ -112,8 +147,36 @@ export default function DayEditor({ date }) {
         </div>
       )}
 
-      {/* symptoms */}
-      {catalog.metrics.length > 0 && (
+      {/* food & meals (chip trackers) */}
+      {foodTrackers.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center gap-2 px-1">
+            <span aria-hidden>🍽️</span>
+            <h2 className="section-title flex-1">Food &amp; meals</h2>
+            <button
+              onClick={copyYesterdayFood}
+              disabled={copying}
+              className="text-xs font-medium text-brand-600 disabled:opacity-50 dark:text-brand-300"
+            >
+              {copying ? 'Copying…' : '↺ Copy yesterday'}
+            </button>
+          </div>
+          <div className="space-y-2">
+            {foodTrackers.map((t) => (
+              <ChipTracker
+                key={t.id}
+                tracker={t}
+                selected={day.trackers?.[t.id] || day.trackers?.[String(t.id)] || {}}
+                onSet={setTracker}
+                onAddOption={onAddOption}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* symptoms + feeling chips */}
+      {(catalog.metrics.length > 0 || feelingTrackers.length > 0) && (
         <section>
           <div className="mb-2 flex items-center gap-2 px-1">
             <SparkleIcon width={16} height={16} className="text-brand-500" />
@@ -128,6 +191,15 @@ export default function DayEditor({ date }) {
                 onSet={(v) => setSymptom(m.id, v)}
                 onAdd={(v) => addSymptom(m.id, v)}
                 onClear={() => clearSymptom(m.id)}
+              />
+            ))}
+            {feelingTrackers.map((t) => (
+              <ChipTracker
+                key={t.id}
+                tracker={t}
+                selected={day.trackers?.[t.id] || day.trackers?.[String(t.id)] || {}}
+                onSet={setTracker}
+                onAddOption={onAddOption}
               />
             ))}
           </div>

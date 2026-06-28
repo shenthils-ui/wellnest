@@ -19,6 +19,7 @@ const METRICS = [
 // [name, time_block, is_husband_task, expected_days]
 const ACTIVITIES = [
   // EARLY_MORNING
+  ['Oil pulling', 'EARLY_MORNING', 0, null],
   ['Lemon + sodium bicarbonate shot', 'EARLY_MORNING', 0, null],
   ['Prepare bicarbonate water for the day', 'EARLY_MORNING', 1, null],
   ['Shilajit drink', 'EARLY_MORNING', 0, null],
@@ -64,4 +65,50 @@ const THERAPIES = [
 
 const TIME_BLOCKS = ['EARLY_MORNING', 'MID_MORNING', 'MIDDAY', 'AFTERNOON', 'EVENING'];
 
-module.exports = { METRICS, ACTIVITIES, THERAPIES, TIME_BLOCKS };
+// "Chip" trackers — tap-to-log option lists. All are fully editable in the app.
+// { name, kind, section, has_intensity, icon, hint, options: [label or [label, emoji]] }
+//   kind: 'multi' (tap several) | 'single' (one choice)
+//   section: 'food' (Food & meals) | 'feeling' (How are you feeling?)
+//   has_intensity: chips cycle light → medium → strong (used for pain)
+const TRACKERS = [
+  {
+    name: 'Green juice ingredients', kind: 'multi', section: 'food', icon: '🥬',
+    hint: 'Tap what went into today’s juice.',
+    options: ['Celery', 'Carrot', 'Beetroot', 'White pumpkin', 'Bottle gourd', 'Ginger',
+      'Amla', 'Cucumber', 'Spinach', 'Lemon', ['Second serving', '🔁']],
+  },
+  {
+    name: 'Salad vegetables', kind: 'multi', section: 'food', icon: '🥗',
+    hint: 'What was in the salad(s) today.',
+    options: ['Zucchini', 'Paprika', 'Onion', 'Avocado', 'Cucumber', 'Tomato',
+      'Carrot', 'Beetroot', 'Lettuce', 'Spinach', 'Lemon', 'Coconut'],
+  },
+  {
+    name: 'Nuts & seeds', kind: 'multi', section: 'food', icon: '🥜',
+    options: ['Almond', 'Walnut', 'Cashew', 'Brazil nut', 'Pumpkin seed', 'Sunflower seed', 'Flax seed'],
+  },
+  {
+    name: 'Cooking style', kind: 'single', section: 'food', icon: '🍳',
+    hint: 'Mostly how today’s food was prepared.',
+    options: ['Fresh / raw', 'Steamed', 'Cooked', 'Fried'],
+  },
+  {
+    name: 'Other drinks', kind: 'multi', section: 'food', icon: '🥤',
+    options: ['Coconut milk', 'Bone broth', 'Herbal tea', 'Lemon water'],
+  },
+  {
+    name: 'Mood', kind: 'single', section: 'feeling', icon: '🫶',
+    options: [['Happy', '😀'], ['Good', '🙂'], ['Normal', '😐'], ['Dull', '😟'], ['Low', '😢']],
+  },
+  {
+    name: 'Pain', kind: 'multi', section: 'feeling', has_intensity: 1, icon: '🩹',
+    hint: 'Tap a spot; tap again for light → medium → strong.',
+    options: ['Head', 'Neck', 'Shoulder', 'Back', 'Bones', 'Breast', 'Stomach', 'Joints', 'Legs'],
+  },
+  {
+    name: 'Bowel movement', kind: 'single', section: 'feeling', icon: '🚽',
+    options: ['None', 'Normal', 'Loose', 'Hard', 'Constipated'],
+  },
+];
+
+module.exports = { METRICS, ACTIVITIES, THERAPIES, TIME_BLOCKS, TRACKERS };

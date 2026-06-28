@@ -93,6 +93,42 @@ CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
   value TEXT
 );
+
+-- "Chip" trackers: editable option lists (ingredients, mood, pain, etc.) that
+-- are logged per day by tapping. One row per tracker.
+CREATE TABLE IF NOT EXISTS trackers (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  kind TEXT NOT NULL DEFAULT 'multi',       -- 'multi' (many chips) | 'single' (one choice)
+  section TEXT NOT NULL DEFAULT 'food',      -- 'food' | 'feeling'  (where it shows on Today)
+  has_intensity INTEGER NOT NULL DEFAULT 0,  -- chips cycle light/medium/strong (e.g. pain)
+  icon TEXT,                                 -- optional emoji shown by the title
+  hint TEXT,                                 -- optional helper line
+  display_order INTEGER NOT NULL DEFAULT 0,
+  active INTEGER NOT NULL DEFAULT 1
+);
+
+CREATE TABLE IF NOT EXISTS tracker_options (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tracker_id INTEGER NOT NULL REFERENCES trackers(id) ON DELETE CASCADE,
+  label TEXT NOT NULL,
+  emoji TEXT,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  active INTEGER NOT NULL DEFAULT 1
+);
+CREATE INDEX IF NOT EXISTS idx_tracker_options_tracker ON tracker_options(tracker_id);
+
+CREATE TABLE IF NOT EXISTS tracker_logs (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tracker_id INTEGER NOT NULL REFERENCES trackers(id) ON DELETE CASCADE,
+  option_id INTEGER NOT NULL REFERENCES tracker_options(id) ON DELETE CASCADE,
+  date TEXT NOT NULL,
+  intensity INTEGER,                          -- 1..3 when the tracker has_intensity
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  UNIQUE(tracker_id, option_id, date)
+);
+CREATE INDEX IF NOT EXISTS idx_tracker_logs_date ON tracker_logs(date);
+CREATE INDEX IF NOT EXISTS idx_tracker_logs_tracker ON tracker_logs(tracker_id);
 `;
 
 function migrate() {

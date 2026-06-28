@@ -46,7 +46,14 @@ export default function HelpGuide() {
             any you don’t want to answer. Feeling shifted later? Tap a new number to log again — the
             day quietly averages your readings.
           </Step>
-          <Step n="3" title="Mark therapies & anything worth remembering">
+          <Step n="3" title="Tap today’s food & how you feel">
+            Under <b className="text-slate-700 dark:text-slate-200">Food &amp; meals</b>, tap the chips
+            for what went into the juice, salad, nuts and so on — tap <b>＋ add</b> for anything new.
+            Under <b className="text-slate-700 dark:text-slate-200">How are you feeling?</b>, tap a
+            Mood, tap any Pain spots (tap again for light → medium → strong), and a Bowel option.
+            Eating much the same as yesterday? Tap <b>↺ Copy yesterday</b> and tweak.
+          </Step>
+          <Step n="4" title="Mark therapies & anything worth remembering">
             Tap a weekly therapy chip if you had one today. Add a short note or a cycle-day number
             if useful. Everything saves on its own — there’s no Save button.
           </Step>
@@ -74,6 +81,8 @@ export default function HelpGuide() {
           <li>• <b>Rename or reorder</b> anything with the pencil and the up/down arrows.</li>
           <li>• <b>Retire</b> an item you’ve stopped — it leaves Today but keeps its history, and you can restore it anytime.</li>
           <li>• <b>Symptoms tracked</b> works the same way if you want to measure something new.</li>
+          <li>• <b>Food &amp; body trackers</b> is where you add/rename the chips (a new vegetable,
+            a pain spot, a drink). New chips can also be added straight from Today with <b>＋ add</b>.</li>
         </ul>
       </div>
 

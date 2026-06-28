@@ -52,6 +52,15 @@ router.get('/day/:date', (req, res) => {
   const therapyRows = db.prepare('SELECT therapy_id FROM therapy_logs WHERE date = ?').all(date);
   const therapies = therapyRows.map((r) => r.therapy_id);
 
+  // tracker selections: { [tracker_id]: { [option_id]: { intensity } } }
+  const trackerRows = db
+    .prepare('SELECT tracker_id, option_id, intensity FROM tracker_logs WHERE date = ?')
+    .all(date);
+  const trackers = {};
+  trackerRows.forEach((r) => {
+    (trackers[r.tracker_id] || (trackers[r.tracker_id] = {}))[r.option_id] = { intensity: r.intensity };
+  });
+
   res.json({
     date,
     logs: logMap,
@@ -59,7 +68,41 @@ router.get('/day/:date', (req, res) => {
     notes: meta.notes ?? null,
     cycle_day: meta.cycle_day ?? null,
     therapies,
+    trackers,
   });
+});
+
+/* ---------------------------- TRACKER LOGS ---------------------------- */
+// PUT /api/tracker-log  { tracker_id, option_id, date, selected, single, intensity }
+//   single=true clears the tracker's other options for that day first.
+router.put('/tracker-log', (req, res) => {
+  const b = req.body || {};
+  const tracker_id = Number(b.tracker_id);
+  const option_id = Number(b.option_id);
+  const date = b.date;
+  if (!tracker_id || !option_id || !isValidDate(date)) {
+    return res.status(400).json({ error: 'tracker_id, option_id and valid date required' });
+  }
+  const intensity =
+    b.intensity == null || b.intensity === '' ? null : clampInt(b.intensity, 1, 3);
+
+  const tx = db.transaction(() => {
+    if (b.selected === false) {
+      db.prepare('DELETE FROM tracker_logs WHERE tracker_id = ? AND option_id = ? AND date = ?')
+        .run(tracker_id, option_id, date);
+      return;
+    }
+    if (b.single) {
+      db.prepare('DELETE FROM tracker_logs WHERE tracker_id = ? AND date = ?').run(tracker_id, date);
+    }
+    db.prepare(
+      `INSERT INTO tracker_logs (tracker_id, option_id, date, intensity)
+       VALUES (?, ?, ?, ?)
+       ON CONFLICT(tracker_id, option_id, date) DO UPDATE SET intensity = excluded.intensity`
+    ).run(tracker_id, option_id, date, intensity);
+  });
+  tx();
+  res.json({ ok: true, tracker_id, option_id, date, selected: b.selected !== false, intensity });
 });
 
 /* --------------------------- ACTIVITY LOGS ---------------------------- */

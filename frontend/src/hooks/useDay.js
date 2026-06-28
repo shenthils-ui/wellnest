@@ -8,6 +8,7 @@ import {
   queueClearSymptom,
   queueDayMeta,
   queueTherapy,
+  queueSetTracker,
 } from '../lib/data';
 
 // Loads a single day and exposes optimistic mutators. Every change updates
@@ -49,7 +50,13 @@ export function useDay(date) {
   const patch = useCallback(
     (mutator) => {
       setDay((prev) => {
-        const next = mutator({ ...prev, logs: { ...prev.logs }, symptoms: { ...prev.symptoms }, therapies: [...prev.therapies] });
+        const next = mutator({
+          ...prev,
+          logs: { ...prev.logs },
+          symptoms: { ...prev.symptoms },
+          therapies: [...prev.therapies],
+          trackers: JSON.parse(JSON.stringify(prev.trackers || {})),
+        });
         cacheDay(date, next);
         return next;
       });
@@ -139,6 +146,27 @@ export function useDay(date) {
     [date, patch]
   );
 
+  // Trackers. For single-select, selecting an option replaces the choice;
+  // tapping the selected one again clears it. has_intensity options cycle
+  // null → 1 → 2 → 3 → off by passing the next intensity.
+  const setTracker = useCallback(
+    (tracker, option_id, { selected, intensity = null } = {}) => {
+      const single = tracker.kind === 'single';
+      const tid = tracker.id;
+      patch((d) => {
+        const t = String(tid);
+        if (single) d.trackers[t] = {};
+        if (!d.trackers[t]) d.trackers[t] = {};
+        if (selected === false) delete d.trackers[t][option_id];
+        else d.trackers[t][option_id] = { intensity };
+        if (Object.keys(d.trackers[t]).length === 0) delete d.trackers[t];
+        return d;
+      });
+      queueSetTracker(date, tid, option_id, selected, { single, intensity });
+    },
+    [date, patch]
+  );
+
   return {
     day,
     loading,
@@ -150,5 +178,6 @@ export function useDay(date) {
     clearSymptom,
     setMeta,
     toggleTherapy,
+    setTracker,
   };
 }

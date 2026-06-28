@@ -12,6 +12,7 @@ const { seed } = require('./seed');
 const { todayStr } = require('./helpers');
 
 const catalogRoutes = require('./routes/catalog');
+const trackerRoutes = require('./routes/trackers');
 const dayRoutes = require('./routes/day');
 const insightRoutes = require('./routes/insights');
 const backupRoutes = require('./routes/backup');
@@ -45,6 +46,7 @@ app.get('/api/stats', (req, res) => {
 });
 
 app.use('/api', catalogRoutes);
+app.use('/api', trackerRoutes);
 app.use('/api', dayRoutes);
 app.use('/api/insights', insightRoutes);
 app.use('/api', backupRoutes);

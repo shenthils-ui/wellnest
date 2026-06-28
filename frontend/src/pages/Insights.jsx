@@ -12,6 +12,7 @@ import { todayISO, addDays, prettyShort } from '../lib/date';
 import { metricColor } from '../lib/metricColors';
 import ProgressRing from '../components/ProgressRing';
 import SymptomTrendChart from '../components/SymptomTrendChart';
+import LookBack from '../components/LookBack';
 import { FlameIcon, InfoIcon } from '../components/Icons';
 
 const RANGES = [
@@ -135,6 +136,7 @@ export default function Insights() {
             from={from}
             to={to}
           />
+          <LookBack metrics={catalog.metrics} from={from} to={to} />
           <AdherenceSection activities={activities} />
         </>
       )}
