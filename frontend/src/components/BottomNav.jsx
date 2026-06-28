@@ -1,10 +1,11 @@
 import { NavLink } from 'react-router-dom';
-import { HomeIcon, CalendarIcon, ChartIcon, CogIcon } from './Icons';
+import { HomeIcon, CalendarIcon, ChartIcon, CogIcon, BookIcon } from './Icons';
 
 const tabs = [
   { to: '/', label: 'Today', Icon: HomeIcon, end: true },
   { to: '/history', label: 'History', Icon: CalendarIcon },
   { to: '/insights', label: 'Insights', Icon: ChartIcon },
+  { to: '/library', label: 'Library', Icon: BookIcon },
   { to: '/settings', label: 'Settings', Icon: CogIcon },
 ];
 

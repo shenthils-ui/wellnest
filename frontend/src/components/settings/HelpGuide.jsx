@@ -53,9 +53,11 @@ export default function HelpGuide() {
             Mood, tap any Pain spots (tap again for light → medium → strong), and a Bowel option.
             Eating much the same as yesterday? Tap <b>↺ Copy yesterday</b> and tweak.
           </Step>
-          <Step n="4" title="Mark therapies & anything worth remembering">
-            Tap a weekly therapy chip if you had one today. Add a short note or a cycle-day number
-            if useful. Everything saves on its own — there’s no Save button.
+          <Step n="4" title="Period, therapies & notes">
+            In <b className="text-slate-700 dark:text-slate-200">Period &amp; cycle</b>, tap a flow on
+            period days — after a couple of cycles you’ll see your average length, the predicted next
+            period and fertile window (also on the History tab). Tap a therapy if you had one today,
+            and a small note box appears (e.g. what the doctor said). Everything saves on its own.
           </Step>
         </div>
       </div>
@@ -94,6 +96,18 @@ export default function HelpGuide() {
           calendar to open and edit it — perfect for catching up on a day you missed, or correcting
           a tap. The colours show how full or how you felt; switch what they represent with the
           chips above the calendar.
+        </p>
+      </div>
+
+      {/* library */}
+      <div>
+        <h4 className="section-title mb-2">Library — contacts, notes &amp; recipes</h4>
+        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          The <b className="text-slate-700 dark:text-slate-200">Library</b> tab keeps reference
+          things out of the daily screen: clinic <b>contacts</b> (tap to call or open the map),
+          <b> visit notes</b> (what the doctor said, by date), <b>tips</b>, and <b>recipes</b>. For a
+          recipe photo, upload it to Google Drive, share it, and paste the link — it shows right in
+          the entry.
         </p>
       </div>
 

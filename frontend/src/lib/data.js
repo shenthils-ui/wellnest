@@ -11,6 +11,8 @@ const emptyDay = (date) => ({
   logs: {},
   symptoms: {},
   therapies: [],
+  therapyNotes: {},
+  period: null,
   trackers: {},
   notes: null,
   cycle_day: null,
@@ -78,6 +80,12 @@ export function queueTherapy(date, therapy_id, on) {
   return enqueue(on ? 'therapy_on' : 'therapy_off', { date, therapy_id }, {
     dedupeKey: `ther:${date}:${therapy_id}`,
   });
+}
+export function queueTherapyNote(date, therapy_id, note) {
+  return enqueue('therapy_note', { date, therapy_id, note }, { dedupeKey: `thernote:${date}:${therapy_id}` });
+}
+export function queuePeriod(date, flow) {
+  return enqueue('period_set', { date, flow }, { dedupeKey: `period:${date}` });
 }
 export function queueSetTracker(date, tracker_id, option_id, selected, { single = false, intensity = null } = {}) {
   // single-select dedupes by tracker (replacing the choice); multi by option
@@ -157,6 +165,16 @@ export const getCorrelationScan = (from, to) =>
 export const getStreaks = () => apiGet('/api/insights/streaks');
 export const getOverview = (from, to) => apiGet(`/api/insights/overview?from=${from}&to=${to}`);
 export const getTherapyLogs = (from, to) => apiGet(`/api/therapy-logs?from=${from}&to=${to}`);
+export const getTrackerSummary = (from, to) => apiGet(`/api/insights/tracker-summary?from=${from}&to=${to}`);
+export async function getCycle() {
+  try {
+    const c = await apiGet('/api/cycle');
+    await cacheSet('cycle', c);
+    return c;
+  } catch (e) {
+    return (await cacheGet('cycle')) || { enoughData: false, hasAnyData: false, avgCycle: 28, periodDays: [], starts: [] };
+  }
+}
 export const getCalendar = (from, to) => apiGet(`/api/insights/calendar?from=${from}&to=${to}`);
 
 // Calendar for a whole year, cached so History still shows (stale) data offline.
@@ -171,6 +189,30 @@ export async function loadCalendarYear(year) {
     const cached = await cacheGet(`cal:${year}`);
     return { data: cached || { perDay: [] }, fromCache: true };
   }
+}
+
+/* ------------------------------ LIBRARY ------------------------------- */
+// Reference notes (providers, visit notes, tips, recipes). Cached for offline
+// reading — handy for a recipe while shopping or a clinic address on the go.
+export async function getLibrary() {
+  try {
+    const rows = await apiGet('/api/library');
+    await cacheSet('library', rows);
+    return { rows, fromCache: false };
+  } catch (e) {
+    const cached = await cacheGet('library');
+    return { rows: cached || [], fromCache: true };
+  }
+}
+export async function createLibraryEntry(body) {
+  const row = await apiPost('/api/library', body);
+  return row;
+}
+export async function updateLibraryEntry(id, body) {
+  return apiPut(`/api/library/${id}`, body);
+}
+export async function deleteLibraryEntry(id) {
+  return apiDelete(`/api/library/${id}`);
 }
 
 /* ------------------------------- BACKUP ------------------------------- */

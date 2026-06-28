@@ -19,6 +19,8 @@ const TABLES = [
   'daily_notes',
   'therapy_logs',
   'tracker_logs',
+  'library_entries',
+  'period_days',
   'settings',
 ];
 
@@ -157,6 +159,8 @@ router.post('/import', (req, res) => {
         'symptom_entries',
         'activity_logs',
         'daily_notes',
+        'library_entries',
+        'period_days',
         'activities',
         'metrics',
         'therapies',
@@ -187,8 +191,10 @@ router.post('/import', (req, res) => {
       insertRows('activity_logs', data.activity_logs, ['id', 'activity_id', 'date', 'status', 'updated_at']);
       insertRows('symptom_entries', data.symptom_entries, ['id', 'metric_id', 'date', 'value', 'created_at']);
       insertRows('daily_notes', data.daily_notes, ['date', 'notes', 'cycle_day', 'updated_at']);
-      insertRows('therapy_logs', data.therapy_logs, ['id', 'therapy_id', 'date', 'created_at']);
+      insertRows('therapy_logs', data.therapy_logs, ['id', 'therapy_id', 'date', 'note', 'created_at']);
+      insertRows('period_days', data.period_days, ['date', 'flow', 'created_at']);
       insertRows('tracker_logs', data.tracker_logs, ['id', 'tracker_id', 'option_id', 'date', 'intensity', 'created_at']);
+      insertRows('library_entries', data.library_entries, ['id', 'category', 'title', 'body', 'link', 'contact', 'address', 'image_url', 'entry_date', 'provider', 'pinned', 'display_order', 'created_at', 'updated_at']);
       insertRows('settings', data.settings, ['key', 'value']);
     });
     tx();

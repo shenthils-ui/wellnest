@@ -4,11 +4,12 @@ import { useDay } from '../hooks/useDay';
 import { dayCompletion, groupByBlock } from '../lib/selectors';
 import { ENCOURAGEMENTS } from '../lib/constants';
 import { isFuture, addDays } from '../lib/date';
-import { addTrackerOption, loadDay } from '../lib/data';
+import { addTrackerOption, loadDay, getCycle } from '../lib/data';
 import ProgressRing from './ProgressRing';
 import ActivityRow from './ActivityRow';
 import SymptomScale from './SymptomScale';
 import ChipTracker from './ChipTracker';
+import PeriodRow from './PeriodRow';
 import { SparkleIcon } from './Icons';
 
 function encouragementFor(date, percent) {
@@ -20,7 +21,19 @@ function encouragementFor(date, percent) {
 
 export default function DayEditor({ date }) {
   const { catalog, refreshCatalog } = useApp();
-  const { day, loading, setLog, setSymptom, addSymptom, clearSymptom, setMeta, toggleTherapy, setTracker } = useDay(date);
+  const { day, loading, setLog, setSymptom, addSymptom, clearSymptom, setMeta, toggleTherapy, setTracker, setTherapyNote, setPeriod } = useDay(date);
+
+  // cycle info (for showing the cycle day on this date), refreshed after a period change
+  const [cycleInfo, setCycleInfo] = useState(null);
+  const refreshCycle = () => getCycle().then(setCycleInfo).catch(() => {});
+  useEffect(() => { refreshCycle(); }, []);
+  const cycleDay = useMemo(() => {
+    const starts = cycleInfo?.starts || [];
+    let last = null;
+    for (const s of starts) if (s <= date) last = s;
+    if (!last) return null;
+    return Math.round((new Date(date + 'T00:00:00') - new Date(last + 'T00:00:00')) / 86400000) + 1;
+  }, [cycleInfo, date]);
 
   const foodTrackers = useMemo(
     () => (catalog.trackers || []).filter((t) => t.section === 'food'),
@@ -64,14 +77,14 @@ export default function DayEditor({ date }) {
     [catalog.activities, date]
   );
 
-  // notes + cycle: local state with debounced autosave
+  // notes: local state with debounced autosave (cycle_day is preserved as-is)
   const [notes, setNotes] = useState('');
-  const [cycle, setCycle] = useState('');
+  const [cycleField, setCycleField] = useState('');
   const timer = useRef(null);
   useEffect(() => {
     if (day) {
       setNotes(day.notes || '');
-      setCycle(day.cycle_day != null ? String(day.cycle_day) : '');
+      setCycleField(day.cycle_day != null ? String(day.cycle_day) : '');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [day?.date, loading]);
@@ -206,7 +219,16 @@ export default function DayEditor({ date }) {
         </section>
       )}
 
-      {/* notes + cycle */}
+      {/* period / cycle */}
+      <PeriodRow
+        flow={day.period}
+        cycleDay={cycleDay}
+        cycle={cycleInfo}
+        date={date}
+        onSet={(f) => { setPeriod(f); setTimeout(refreshCycle, 400); }}
+      />
+
+      {/* notes */}
       <section className="card space-y-3 p-4">
         <div>
           <label className="section-title mb-1.5 block">Notes</label>
@@ -216,34 +238,17 @@ export default function DayEditor({ date }) {
             value={notes}
             onChange={(e) => {
               setNotes(e.target.value);
-              commitMeta(e.target.value, cycle);
+              commitMeta(e.target.value, cycleField);
             }}
           />
-        </div>
-        <div className="flex items-center gap-3">
-          <label className="section-title">Cycle day</label>
-          <input
-            type="number"
-            min="1"
-            max="60"
-            inputMode="numeric"
-            className="input w-24"
-            placeholder="—"
-            value={cycle}
-            onChange={(e) => {
-              setCycle(e.target.value);
-              commitMeta(notes, e.target.value);
-            }}
-          />
-          <span className="text-xs text-slate-400">optional</span>
         </div>
       </section>
 
-      {/* weekly therapies */}
+      {/* therapies */}
       {catalog.therapies.length > 0 && (
         <section>
           <div className="mb-2 px-1">
-            <h2 className="section-title">Weekly therapies — done today?</h2>
+            <h2 className="section-title">Therapies — done today?</h2>
           </div>
           <div className="flex flex-wrap gap-2">
             {catalog.therapies.map((t) => {
@@ -264,8 +269,39 @@ export default function DayEditor({ date }) {
               );
             })}
           </div>
+          {/* notes for any therapy marked done today */}
+          {catalog.therapies.filter((t) => day.therapies.includes(t.id)).map((t) => (
+            <TherapyNote
+              key={t.id}
+              name={t.name}
+              value={day.therapyNotes?.[t.id] || ''}
+              onCommit={(v) => setTherapyNote(t.id, v)}
+            />
+          ))}
         </section>
       )}
+    </div>
+  );
+}
+
+// A gentle, debounced note for a therapy done today (e.g. what happened).
+function TherapyNote({ name, value, onCommit }) {
+  const [text, setText] = useState(value);
+  const t = useRef(null);
+  useEffect(() => { setText(value); }, [value]);
+  const onChange = (v) => {
+    setText(v);
+    if (t.current) clearTimeout(t.current);
+    t.current = setTimeout(() => onCommit(v), 600);
+  };
+  return (
+    <div className="mt-2">
+      <input
+        value={text}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={`Note for ${name}… (optional)`}
+        className="input text-sm"
+      />
     </div>
   );
 }

@@ -84,10 +84,19 @@ CREATE TABLE IF NOT EXISTS therapy_logs (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   therapy_id INTEGER NOT NULL REFERENCES therapies(id) ON DELETE CASCADE,
   date TEXT NOT NULL,                            -- 'YYYY-MM-DD'
+  note TEXT,                                     -- e.g. what happened at a hospital visit
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   UNIQUE(therapy_id, date)
 );
 CREATE INDEX IF NOT EXISTS idx_therapy_logs_date ON therapy_logs(date);
+
+-- Menstrual cycle: one row per logged period day (with flow). Cycle length and
+-- predictions are derived from these in the API.
+CREATE TABLE IF NOT EXISTS period_days (
+  date TEXT PRIMARY KEY,                         -- 'YYYY-MM-DD'
+  flow TEXT,                                     -- 'spotting' | 'light' | 'medium' | 'heavy'
+  created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
 
 CREATE TABLE IF NOT EXISTS settings (
   key TEXT PRIMARY KEY,
@@ -129,10 +138,41 @@ CREATE TABLE IF NOT EXISTS tracker_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_tracker_logs_date ON tracker_logs(date);
 CREATE INDEX IF NOT EXISTS idx_tracker_logs_tracker ON tracker_logs(tracker_id);
+
+-- Library: reference notes kept off the daily screen — provider contacts,
+-- visit notes ("what the doctor said"), tips and recipes. Photos are stored as
+-- links (e.g. a Google Drive share URL), keeping the database small & portable.
+CREATE TABLE IF NOT EXISTS library_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category TEXT NOT NULL DEFAULT 'tip',   -- 'provider' | 'visit' | 'tip' | 'recipe' | 'other'
+  title TEXT NOT NULL,
+  body TEXT,
+  link TEXT,
+  contact TEXT,
+  address TEXT,
+  image_url TEXT,
+  entry_date TEXT,                        -- e.g. the date of a visit
+  provider TEXT,                          -- free-text provider name (Dr / NAET / …)
+  pinned INTEGER NOT NULL DEFAULT 0,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_library_category ON library_entries(category);
 `;
+
+// Add a column to an existing table if it isn't there yet (for upgrades).
+function ensureColumn(table, column, definition) {
+  const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+  if (!cols.some((c) => c.name === column)) {
+    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
+  }
+}
 
 function migrate() {
   db.exec(SCHEMA);
+  // upgrades for databases created before these columns existed
+  ensureColumn('therapy_logs', 'note', 'TEXT');
 }
 
 module.exports = { db, migrate, DB_PATH, DATA_DIR };

@@ -58,6 +58,9 @@ body {
   .section-title {
     @apply text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500;
   }
+  .chip-action {
+    @apply inline-flex items-center gap-1 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 active:scale-95 dark:bg-slate-800 dark:text-brand-300;
+  }
 }
 
 /* Hide scrollbars on horizontal pickers but keep them scrollable */

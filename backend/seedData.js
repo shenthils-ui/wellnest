@@ -8,13 +8,17 @@
 // 5=Fri, 6=Sat. null means "every day".
 
 const METRICS = [
-  { key: 'energy',  name: 'Morning Energy', good_direction: 'high', time_hint: 'morning' },
   { key: 'sleep',   name: 'Sleep Quality',  good_direction: 'high', time_hint: 'morning' },
+  { key: 'energy',  name: 'Morning Energy', good_direction: 'high', time_hint: 'morning' },
   { key: 'mood_am', name: 'Morning Mood',   good_direction: 'high', time_hint: 'morning' },
   { key: 'pain',    name: 'Evening Pain',   good_direction: 'low',  time_hint: 'evening' },
   { key: 'mood_pm', name: 'Evening Mood',   good_direction: 'high', time_hint: 'evening' },
   { key: 'stress',  name: 'Stress',         good_direction: 'low',  time_hint: 'anytime' },
 ];
+
+const VEG = ['Zucchini', 'Paprika', 'Onion', 'Avocado', 'Cucumber', 'Tomato',
+  'Carrot', 'Beetroot', 'Lettuce', 'Spinach', 'Lentils', 'Lemon', 'Coconut'];
+const COOKING = ['Fresh / raw', 'Steamed', 'Cooked', 'Fried'];
 
 // [name, time_block, is_husband_task, expected_days]
 const ACTIVITIES = [
@@ -78,19 +82,27 @@ const TRACKERS = [
       'Amla', 'Cucumber', 'Spinach', 'Lemon', ['Second serving', '🔁']],
   },
   {
-    name: 'Salad vegetables', kind: 'multi', section: 'food', icon: '🥗',
-    hint: 'What was in the salad(s) today.',
-    options: ['Zucchini', 'Paprika', 'Onion', 'Avocado', 'Cucumber', 'Tomato',
-      'Carrot', 'Beetroot', 'Lettuce', 'Spinach', 'Lemon', 'Coconut'],
+    name: 'Lunch — vegetables', kind: 'multi', section: 'food', icon: '🥗',
+    hint: 'What lunch contained.',
+    options: VEG,
   },
   {
-    name: 'Nuts & seeds', kind: 'multi', section: 'food', icon: '🥜',
-    options: ['Almond', 'Walnut', 'Cashew', 'Brazil nut', 'Pumpkin seed', 'Sunflower seed', 'Flax seed'],
+    name: 'Lunch — cooking style', kind: 'single', section: 'food', icon: '🍳',
+    options: COOKING,
   },
   {
-    name: 'Cooking style', kind: 'single', section: 'food', icon: '🍳',
-    hint: 'Mostly how today’s food was prepared.',
-    options: ['Fresh / raw', 'Steamed', 'Cooked', 'Fried'],
+    name: 'Dinner — vegetables', kind: 'multi', section: 'food', icon: '🍽️',
+    hint: 'What dinner contained.',
+    options: VEG,
+  },
+  {
+    name: 'Dinner — cooking style', kind: 'single', section: 'food', icon: '🍳',
+    options: COOKING,
+  },
+  {
+    name: 'Snacks', kind: 'multi', section: 'food', icon: '🥜',
+    hint: 'Nuts, seeds and other snacks.',
+    options: ['Almond', 'Walnut', 'Cashew', 'Brazil nut', 'Pumpkin seed', 'Sunflower seed', 'Flax seed', 'Fruit'],
   },
   {
     name: 'Other drinks', kind: 'multi', section: 'food', icon: '🥤',

@@ -1,14 +1,25 @@
 import { useEffect, useMemo, useState, useCallback } from 'react';
 import { useApp } from '../context/AppContext';
-import { loadCalendarYear } from '../lib/data';
-import { monthLabel, todayISO } from '../lib/date';
+import { loadCalendarYear, getCycle } from '../lib/data';
+import { monthLabel, todayISO, addDays } from '../lib/date';
 import { completionColor, valueColor } from '../lib/constants';
 import CalendarMonth from '../components/CalendarMonth';
 import YearPixels from '../components/YearPixels';
+import CycleCard from '../components/CycleCard';
 import DaySheet from '../components/DaySheet';
 import { ChevronLeft, ChevronRight } from '../components/Icons';
 
 function Legend({ mode, metric }) {
+  if (mode === 'cycle') {
+    return (
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-xs text-slate-400">
+        <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-rose-400" /> Period</span>
+        <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-full border-2 border-dotted border-rose-400" /> Predicted</span>
+        <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-full bg-teal-100" /> Fertile</span>
+        <span className="inline-flex items-center gap-1"><span className="h-3 w-3 rounded-full border-2 border-dotted border-teal-400" /> Ovulation</span>
+      </div>
+    );
+  }
   if (mode === 'completion') {
     return (
       <div className="mt-3 flex items-center justify-center gap-3 text-xs text-slate-400">
@@ -48,6 +59,40 @@ export default function History() {
   const [loading, setLoading] = useState(true);
   const [offline, setOffline] = useState(false);
   const [selected, setSelected] = useState(null);
+  const [cycleData, setCycleData] = useState(null);
+
+  const loadCycle = useCallback(() => { getCycle().then(setCycleData).catch(() => {}); }, []);
+  useEffect(() => { loadCycle(); }, [loadCycle]);
+
+  // Build period / predicted / fertile / ovulation date sets, projecting a few
+  // cycles ahead so the calendar shows upcoming predictions like Flo.
+  const cycleSets = useMemo(() => {
+    const period = {};
+    const predicted = new Set();
+    const fertile = new Set();
+    const ovulation = new Set();
+    if (!cycleData) return { period, predicted, fertile, ovulation };
+    (cycleData.periodDays || []).forEach((p) => { period[p.date] = p.flow || 'medium'; });
+    const today = todayISO();
+    if (cycleData.enoughData && cycleData.lastStart) {
+      const cycle = cycleData.avgCycle || 28;
+      const plen = cycleData.avgPeriodLen || 5;
+      for (let k = 1; k <= 8; k++) {
+        const start = addDays(cycleData.lastStart, k * cycle);
+        for (let i = 0; i < plen; i++) {
+          const d = addDays(start, i);
+          if (d > today && !period[d]) predicted.add(d);
+        }
+        const ov = addDays(start, -14);
+        if (ov > today) ovulation.add(ov);
+        for (let i = -5; i <= 1; i++) {
+          const d = addDays(ov, i);
+          if (d > today && !period[d] && d !== ov) fertile.add(d);
+        }
+      }
+    }
+    return { period, predicted, fertile, ovulation };
+  }, [cycleData]);
 
   // default the year-pixels metric to "pain" if present, else the first metric
   useEffect(() => {
@@ -110,15 +155,17 @@ export default function History() {
         </p>
       )}
 
+      <CycleCard />
+
       {view === 'month' ? (
         <>
           {/* month nav */}
           <div className="flex items-center justify-between">
-            <button onClick={prevMonth} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-softer dark:bg-slate-900 dark:text-slate-300">
+            <button aria-label="Previous month" onClick={prevMonth} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-softer dark:bg-slate-900 dark:text-slate-300">
               <ChevronLeft width={18} height={18} />
             </button>
             <h2 className="text-base font-semibold text-slate-800 dark:text-slate-100">{monthLabel(year, monthIdx)}</h2>
-            <button onClick={nextMonth} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-softer dark:bg-slate-900 dark:text-slate-300">
+            <button aria-label="Next month" onClick={nextMonth} className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-slate-500 shadow-softer dark:bg-slate-900 dark:text-slate-300">
               <ChevronRight width={18} height={18} />
             </button>
           </div>
@@ -126,6 +173,7 @@ export default function History() {
           {/* color-by chips */}
           <div className="no-scrollbar -mx-3 flex gap-2 overflow-x-auto px-3">
             <Chip active={colorMode === 'completion'} onClick={() => setColorMode('completion')}>Done %</Chip>
+            <Chip active={colorMode === 'cycle'} onClick={() => setColorMode('cycle')}>🌸 Cycle</Chip>
             {catalog.metrics.map((m) => (
               <Chip key={m.id} active={colorMode === m.id} onClick={() => setColorMode(m.id)}>{m.name}</Chip>
             ))}
@@ -138,9 +186,10 @@ export default function History() {
               dataByDate={data}
               colorMode={colorMode}
               metric={colorMetric}
+              cycle={cycleSets}
               onSelectDay={setSelected}
             />
-            <Legend mode={colorMode === 'completion' ? 'completion' : 'symptom'} metric={colorMetric} />
+            <Legend mode={colorMode === 'completion' ? 'completion' : colorMode === 'cycle' ? 'cycle' : 'symptom'} metric={colorMetric} />
           </div>
           <p className="px-1 text-center text-xs text-slate-400">Tap any day to view or back-fill it.</p>
         </>
@@ -179,6 +228,7 @@ export default function History() {
           onClose={() => {
             setSelected(null);
             refresh();
+            loadCycle();
           }}
         />
       )}

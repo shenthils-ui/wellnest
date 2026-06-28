@@ -539,4 +539,46 @@ router.get('/lookback', (req, res) => {
   });
 });
 
+/* -------------------------- TRACKER SUMMARY --------------------------- */
+// GET /api/insights/tracker-summary?from=&to=
+// Per-tracker option frequencies over a range — used by the doctor report and
+// to show "what was eaten / how she felt most often".
+router.get('/tracker-summary', (req, res) => {
+  const { from, to } = getRange(req, 30);
+  const trackers = db.prepare('SELECT * FROM trackers ORDER BY display_order, id').all();
+  const optStmt = db.prepare('SELECT * FROM tracker_options WHERE tracker_id = ? ORDER BY display_order, id');
+  const rows = db
+    .prepare('SELECT tracker_id, option_id, date FROM tracker_logs WHERE date BETWEEN ? AND ?')
+    .all(from, to);
+
+  // option_id -> set of days, and tracker_id -> set of days with any log
+  const optDays = new Map();
+  const trkDays = new Map();
+  for (const r of rows) {
+    if (!optDays.has(r.option_id)) optDays.set(r.option_id, new Set());
+    optDays.get(r.option_id).add(r.date);
+    if (!trkDays.has(r.tracker_id)) trkDays.set(r.tracker_id, new Set());
+    trkDays.get(r.tracker_id).add(r.date);
+  }
+
+  const out = trackers.map((t) => {
+    const options = optStmt
+      .all(t.id)
+      .map((o) => ({ id: o.id, label: o.label, emoji: o.emoji, days: optDays.get(o.id)?.size || 0 }))
+      .filter((o) => o.days > 0)
+      .sort((a, b) => b.days - a.days);
+    return {
+      id: t.id,
+      name: t.name,
+      section: t.section,
+      kind: t.kind,
+      icon: t.icon,
+      daysLogged: trkDays.get(t.id)?.size || 0,
+      options,
+    };
+  }).filter((t) => t.options.length > 0);
+
+  res.json({ from, to, trackers: out });
+});
+
 module.exports = router;

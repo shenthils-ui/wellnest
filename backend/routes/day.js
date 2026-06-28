@@ -49,8 +49,12 @@ router.get('/day/:date', (req, res) => {
     cycle_day: null,
   };
 
-  const therapyRows = db.prepare('SELECT therapy_id FROM therapy_logs WHERE date = ?').all(date);
+  const therapyRows = db.prepare('SELECT therapy_id, note FROM therapy_logs WHERE date = ?').all(date);
   const therapies = therapyRows.map((r) => r.therapy_id);
+  const therapyNotes = {};
+  therapyRows.forEach((r) => { if (r.note) therapyNotes[r.therapy_id] = r.note; });
+
+  const periodRow = db.prepare('SELECT flow FROM period_days WHERE date = ?').get(date);
 
   // tracker selections: { [tracker_id]: { [option_id]: { intensity } } }
   const trackerRows = db
@@ -68,6 +72,8 @@ router.get('/day/:date', (req, res) => {
     notes: meta.notes ?? null,
     cycle_day: meta.cycle_day ?? null,
     therapies,
+    therapyNotes,
+    period: periodRow ? (periodRow.flow || 'medium') : null,
     trackers,
   });
 });
@@ -253,6 +259,42 @@ router.delete('/therapy-logs', (req, res) => {
   }
   db.prepare('DELETE FROM therapy_logs WHERE therapy_id = ? AND date = ?').run(therapy_id, date);
   res.json({ ok: true, therapy_id, date, done: false });
+});
+
+// PUT /api/therapy-note  { therapy_id, date, note } -> note for that day's
+// therapy (marks it done if it wasn't already, so a note implies it happened).
+router.put('/therapy-note', (req, res) => {
+  const b = req.body || {};
+  const therapy_id = Number(b.therapy_id);
+  const date = b.date;
+  if (!therapy_id || !isValidDate(date)) {
+    return res.status(400).json({ error: 'therapy_id and valid date required' });
+  }
+  const note = b.note === '' || b.note == null ? null : String(b.note);
+  db.prepare(
+    `INSERT INTO therapy_logs (therapy_id, date, note) VALUES (?, ?, ?)
+     ON CONFLICT(therapy_id, date) DO UPDATE SET note = excluded.note`
+  ).run(therapy_id, date, note);
+  res.json({ ok: true, therapy_id, date, note });
+});
+
+/* ------------------------------- PERIOD ------------------------------- */
+// PUT /api/period-day  { date, flow }  (flow null clears the period day)
+router.put('/period-day', (req, res) => {
+  const b = req.body || {};
+  const date = b.date;
+  if (!isValidDate(date)) return res.status(400).json({ error: 'valid date required' });
+  const flows = ['spotting', 'light', 'medium', 'heavy'];
+  if (b.flow == null || b.flow === '') {
+    db.prepare('DELETE FROM period_days WHERE date = ?').run(date);
+    return res.json({ ok: true, date, flow: null });
+  }
+  const flow = flows.includes(b.flow) ? b.flow : 'medium';
+  db.prepare(
+    `INSERT INTO period_days (date, flow) VALUES (?, ?)
+     ON CONFLICT(date) DO UPDATE SET flow = excluded.flow`
+  ).run(date, flow);
+  res.json({ ok: true, date, flow });
 });
 
 module.exports = router;
