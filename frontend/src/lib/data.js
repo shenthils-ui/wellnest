@@ -215,6 +215,13 @@ export async function deleteLibraryEntry(id) {
   return apiDelete(`/api/library/${id}`);
 }
 
+/* ---------------------------- GOOGLE DRIVE ---------------------------- */
+export const getDriveStatus = () => apiGet('/api/drive/status');
+export const saveDriveConfig = (client_id, client_secret) => apiPost('/api/drive/config', { client_id, client_secret });
+export const backupToDrive = () => apiPost('/api/drive/backup', {});
+export const setDriveAuto = (enabled) => apiPost('/api/drive/auto', { enabled });
+export const disconnectDrive = () => apiPost('/api/drive/disconnect', {});
+
 /* ------------------------------- BACKUP ------------------------------- */
 export const exportJsonUrl = () => '/api/export/json';
 export const exportCsvUrl = (type) => `/api/export/csv?type=${type}`;

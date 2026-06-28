@@ -127,8 +127,9 @@ export default function HelpGuide() {
           </li>
           <li>
             <b className="text-slate-700 dark:text-slate-200">Back up weekly.</b> In
-            <b className="text-slate-700 dark:text-slate-200"> Backup &amp; export</b>, save a JSON file
-            now and then — that’s your safety net, and it restores everything if needed.
+            <b className="text-slate-700 dark:text-slate-200"> Backup &amp; export</b>, tap
+            <b> Save backup</b> (or set up one-tap <b>Google Drive backup</b>) now and then — that’s
+            your safety net, and it restores everything if needed.
           </li>
           <li>
             <b className="text-slate-700 dark:text-slate-200">Private by design.</b> Everything lives
