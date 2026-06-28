@@ -10,6 +10,10 @@ installable phone app (PWA) that runs entirely on your own Windows PC.
   and gentle “what seems to help?” correlations.
 - **Works on the phone, even offline.** Entries made away from home are saved on
   the phone and sync back to the PC automatically when you’re home again.
+- **Fully editable.** Every activity, symptom and therapy can be added, renamed,
+  reordered or retired right in the app (**Settings → Manage routine**) — so it
+  adapts as the routine changes. A built‑in guide (**Settings → How to use
+  WellNest**) walks through everyday use, including adding a new item.
 
 > WellNest is a personal tracking tool, not a medical device. Any patterns it
 > shows are **observational, not medical advice.**

@@ -7,9 +7,10 @@ import ActivitiesManager from '../components/settings/ActivitiesManager';
 import MetricsManager from '../components/settings/MetricsManager';
 import TherapiesManager from '../components/settings/TherapiesManager';
 import BackupPanel from '../components/settings/BackupPanel';
+import HelpGuide from '../components/settings/HelpGuide';
 import {
   SunIcon, MoonIcon, BellIcon, ListIcon, SparkleIcon, HeartIcon,
-  ChevronRight, DownloadIcon, CogIcon,
+  ChevronRight, DownloadIcon, CogIcon, InfoIcon,
 } from '../components/Icons';
 
 function Section({ icon: Icon, title, subtitle, children, defaultOpen = false }) {
@@ -42,6 +43,10 @@ export default function Settings() {
       <p className="rounded-xl bg-brand-50 px-3.5 py-2.5 text-center text-xs text-brand-700 dark:bg-slate-800/60 dark:text-brand-200">
         🔒 Everything stays on your home computer — no accounts, no cloud, no tracking.
       </p>
+
+      <Section icon={InfoIcon} title="How to use WellNest" subtitle="A quick, gentle guide">
+        <HelpGuide />
+      </Section>
 
       {/* appearance */}
       <section className="card flex items-center gap-3 px-4 py-3.5">
