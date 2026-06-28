@@ -19,6 +19,7 @@ const TABLES = [
   'daily_notes',
   'therapy_logs',
   'tracker_logs',
+  'library_entries',
   'settings',
 ];
 
@@ -157,6 +158,7 @@ router.post('/import', (req, res) => {
         'symptom_entries',
         'activity_logs',
         'daily_notes',
+        'library_entries',
         'activities',
         'metrics',
         'therapies',
@@ -189,6 +191,7 @@ router.post('/import', (req, res) => {
       insertRows('daily_notes', data.daily_notes, ['date', 'notes', 'cycle_day', 'updated_at']);
       insertRows('therapy_logs', data.therapy_logs, ['id', 'therapy_id', 'date', 'created_at']);
       insertRows('tracker_logs', data.tracker_logs, ['id', 'tracker_id', 'option_id', 'date', 'intensity', 'created_at']);
+      insertRows('library_entries', data.library_entries, ['id', 'category', 'title', 'body', 'link', 'contact', 'address', 'image_url', 'entry_date', 'provider', 'pinned', 'display_order', 'created_at', 'updated_at']);
       insertRows('settings', data.settings, ['key', 'value']);
     });
     tx();

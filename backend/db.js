@@ -129,6 +129,27 @@ CREATE TABLE IF NOT EXISTS tracker_logs (
 );
 CREATE INDEX IF NOT EXISTS idx_tracker_logs_date ON tracker_logs(date);
 CREATE INDEX IF NOT EXISTS idx_tracker_logs_tracker ON tracker_logs(tracker_id);
+
+-- Library: reference notes kept off the daily screen — provider contacts,
+-- visit notes ("what the doctor said"), tips and recipes. Photos are stored as
+-- links (e.g. a Google Drive share URL), keeping the database small & portable.
+CREATE TABLE IF NOT EXISTS library_entries (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  category TEXT NOT NULL DEFAULT 'tip',   -- 'provider' | 'visit' | 'tip' | 'recipe' | 'other'
+  title TEXT NOT NULL,
+  body TEXT,
+  link TEXT,
+  contact TEXT,
+  address TEXT,
+  image_url TEXT,
+  entry_date TEXT,                        -- e.g. the date of a visit
+  provider TEXT,                          -- free-text provider name (Dr / NAET / …)
+  pinned INTEGER NOT NULL DEFAULT 0,
+  display_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+CREATE INDEX IF NOT EXISTS idx_library_category ON library_entries(category);
 `;
 
 function migrate() {

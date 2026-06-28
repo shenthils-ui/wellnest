@@ -6,6 +6,7 @@ import {
   getActivityInsights,
   getSymptomInsights,
   getTherapyLogs,
+  getTrackerSummary,
 } from '../lib/data';
 import { todayISO, addDays, prettyDate } from '../lib/date';
 import SymptomTrendChart from '../components/SymptomTrendChart';
@@ -31,10 +32,11 @@ export default function DoctorReport() {
       getActivityInsights(from, to),
       getSymptomInsights(from, to),
       getTherapyLogs(from, to),
+      getTrackerSummary(from, to),
     ])
-      .then(([ov, act, sym, ther]) => {
+      .then(([ov, act, sym, ther, trk]) => {
         if (!live) return;
-        setData({ ov, act: act.activities || [], sym: sym.metrics || [], ther });
+        setData({ ov, act: act.activities || [], sym: sym.metrics || [], ther, trk: trk.trackers || [] });
         setLoading(false);
       })
       .catch(() => { if (live) { setError(true); setLoading(false); } });
@@ -149,6 +151,31 @@ export default function DoctorReport() {
               </table>
             </section>
 
+            {/* food & lifestyle (food trackers) */}
+            {data.trk.filter((t) => t.section === 'food' && t.options.length).length > 0 && (
+              <section className="break-inside-avoid">
+                <h2 className="mb-2 text-lg font-semibold">Food &amp; lifestyle</h2>
+                <p className="mb-2 text-xs text-slate-400">How often each appeared on logged days in this range.</p>
+                <div className="space-y-2.5">
+                  {data.trk.filter((t) => t.section === 'food' && t.options.length).map((t) => (
+                    <TrackerLine key={t.id} t={t} />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {/* mood & body (feeling trackers) */}
+            {data.trk.filter((t) => t.section === 'feeling' && t.options.length).length > 0 && (
+              <section className="break-inside-avoid">
+                <h2 className="mb-2 text-lg font-semibold">Mood &amp; body</h2>
+                <div className="space-y-2.5">
+                  {data.trk.filter((t) => t.section === 'feeling' && t.options.length).map((t) => (
+                    <TrackerLine key={t.id} t={t} />
+                  ))}
+                </div>
+              </section>
+            )}
+
             {/* therapies */}
             {catalog.therapies.length > 0 && (
               <section>
@@ -170,6 +197,24 @@ export default function DoctorReport() {
             </p>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+function TrackerLine({ t }) {
+  return (
+    <div className="break-inside-avoid border-b border-slate-100 pb-2">
+      <div className="text-sm font-medium text-slate-700">
+        {t.icon ? <span className="mr-1">{t.icon}</span> : null}{t.name}
+        <span className="ml-2 text-xs font-normal text-slate-400">{t.daysLogged} day(s)</span>
+      </div>
+      <div className="mt-1 flex flex-wrap gap-1.5">
+        {t.options.map((o) => (
+          <span key={o.id} className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+            {o.emoji ? `${o.emoji} ` : ''}{o.label} · {o.days}
+          </span>
+        ))}
       </div>
     </div>
   );

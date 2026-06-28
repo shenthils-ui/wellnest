@@ -19,6 +19,10 @@ installable phone app (PWA) that runs entirely on your own Windows PC.
   chips daily (no typing). The **Look back** insight then shows what tended to
   appear in the days before tougher days — observational patterns to explore with
   a doctor, never a diagnosis.
+- **Library** keeps reference info off the daily screen: provider contacts (tap
+  to call / map), visit notes, tips and recipes — with photos via a pasted
+  Google Drive link. The printable **doctor report** also summarises food, mood
+  and pain over the chosen dates.
 
 > WellNest is a personal tracking tool, not a medical device. Any patterns it
 > shows are **observational, not medical advice.**

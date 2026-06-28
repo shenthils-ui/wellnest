@@ -97,6 +97,18 @@ export default function HelpGuide() {
         </p>
       </div>
 
+      {/* library */}
+      <div>
+        <h4 className="section-title mb-2">Library — contacts, notes &amp; recipes</h4>
+        <p className="text-sm leading-relaxed text-slate-500 dark:text-slate-400">
+          The <b className="text-slate-700 dark:text-slate-200">Library</b> tab keeps reference
+          things out of the daily screen: clinic <b>contacts</b> (tap to call or open the map),
+          <b> visit notes</b> (what the doctor said, by date), <b>tips</b>, and <b>recipes</b>. For a
+          recipe photo, upload it to Google Drive, share it, and paste the link — it shows right in
+          the entry.
+        </p>
+      </div>
+
       {/* offline + reminders + backup */}
       <div>
         <h4 className="section-title mb-2">Good to know</h4>

@@ -8,6 +8,7 @@ import Today from './pages/Today';
 // screens are code-split so the first paint on the phone is fast.
 const History = lazy(() => import('./pages/History'));
 const Insights = lazy(() => import('./pages/Insights'));
+const Library = lazy(() => import('./pages/Library'));
 const Settings = lazy(() => import('./pages/Settings'));
 const DoctorReport = lazy(() => import('./pages/DoctorReport'));
 
@@ -31,6 +32,7 @@ function MainLayout() {
               <Route path="/" element={<Today />} />
               <Route path="/history" element={<History />} />
               <Route path="/insights" element={<Insights />} />
+              <Route path="/library" element={<Library />} />
               <Route path="/settings" element={<Settings />} />
               <Route path="*" element={<Today />} />
             </Routes>

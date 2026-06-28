@@ -157,6 +157,7 @@ export const getCorrelationScan = (from, to) =>
 export const getStreaks = () => apiGet('/api/insights/streaks');
 export const getOverview = (from, to) => apiGet(`/api/insights/overview?from=${from}&to=${to}`);
 export const getTherapyLogs = (from, to) => apiGet(`/api/therapy-logs?from=${from}&to=${to}`);
+export const getTrackerSummary = (from, to) => apiGet(`/api/insights/tracker-summary?from=${from}&to=${to}`);
 export const getCalendar = (from, to) => apiGet(`/api/insights/calendar?from=${from}&to=${to}`);
 
 // Calendar for a whole year, cached so History still shows (stale) data offline.
@@ -171,6 +172,30 @@ export async function loadCalendarYear(year) {
     const cached = await cacheGet(`cal:${year}`);
     return { data: cached || { perDay: [] }, fromCache: true };
   }
+}
+
+/* ------------------------------ LIBRARY ------------------------------- */
+// Reference notes (providers, visit notes, tips, recipes). Cached for offline
+// reading — handy for a recipe while shopping or a clinic address on the go.
+export async function getLibrary() {
+  try {
+    const rows = await apiGet('/api/library');
+    await cacheSet('library', rows);
+    return { rows, fromCache: false };
+  } catch (e) {
+    const cached = await cacheGet('library');
+    return { rows: cached || [], fromCache: true };
+  }
+}
+export async function createLibraryEntry(body) {
+  const row = await apiPost('/api/library', body);
+  return row;
+}
+export async function updateLibraryEntry(id, body) {
+  return apiPut(`/api/library/${id}`, body);
+}
+export async function deleteLibraryEntry(id) {
+  return apiDelete(`/api/library/${id}`);
 }
 
 /* ------------------------------- BACKUP ------------------------------- */

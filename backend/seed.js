@@ -112,6 +112,16 @@ function ensureExtras() {
        VALUES ('Oil pulling', 'EARLY_MORNING', 0, NULL, ?, 1)`
     ).run(min - 1);
   }
+
+  // Starter provider cards in the Library (only if it's empty), ready to fill in.
+  const libCount = db.prepare('SELECT COUNT(*) c FROM library_entries').get().c;
+  if (libCount === 0) {
+    const insL = db.prepare(
+      `INSERT INTO library_entries (category, title, provider, pinned, display_order)
+       VALUES ('provider', ?, ?, 1, ?)`
+    );
+    ['Doctor', 'NAET', 'Hyperbaric', 'Osteopath'].forEach((name, i) => insL.run(name, name, i));
+  }
 }
 
 if (require.main === module) {
