@@ -52,6 +52,10 @@ function send(item) {
         tracker_id: p.tracker_id, option_id: p.option_id, date: p.date,
         selected: p.selected, single: p.single, intensity: p.intensity,
       });
+    case 'therapy_note':
+      return apiPut('/api/therapy-note', { therapy_id: p.therapy_id, date: p.date, note: p.note });
+    case 'period_set':
+      return apiPut('/api/period-day', { date: p.date, flow: p.flow });
     case 'request': // generic (catalog/settings CRUD)
       if (p.method === 'POST') return apiPost(p.path, p.body);
       if (p.method === 'PUT') return apiPut(p.path, p.body);
@@ -168,6 +172,8 @@ export async function overlayDay(date, day) {
     symptoms: { ...(day.symptoms || {}) },
     therapies: [...(day.therapies || [])],
     trackers: JSON.parse(JSON.stringify(day.trackers || {})),
+    therapyNotes: { ...(day.therapyNotes || {}) },
+    period: day.period ?? null,
     notes: day.notes ?? null,
     cycle_day: day.cycle_day ?? null,
     date,
@@ -216,6 +222,13 @@ export async function overlayDay(date, day) {
         if (Object.keys(d.trackers[t]).length === 0) delete d.trackers[t];
         break;
       }
+      case 'therapy_note':
+        if (p.note) d.therapyNotes[p.therapy_id] = p.note;
+        else delete d.therapyNotes[p.therapy_id];
+        break;
+      case 'period_set':
+        d.period = p.flow ?? null;
+        break;
       default:
         break;
     }

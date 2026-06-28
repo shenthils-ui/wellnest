@@ -5,6 +5,7 @@ import { monthLabel, todayISO } from '../lib/date';
 import { completionColor, valueColor } from '../lib/constants';
 import CalendarMonth from '../components/CalendarMonth';
 import YearPixels from '../components/YearPixels';
+import CycleCard from '../components/CycleCard';
 import DaySheet from '../components/DaySheet';
 import { ChevronLeft, ChevronRight } from '../components/Icons';
 
@@ -109,6 +110,8 @@ export default function History() {
           Showing saved data — reconnect to your home server for the latest.
         </p>
       )}
+
+      <CycleCard />
 
       {view === 'month' ? (
         <>

@@ -9,6 +9,8 @@ import {
   queueDayMeta,
   queueTherapy,
   queueSetTracker,
+  queueTherapyNote,
+  queuePeriod,
 } from '../lib/data';
 
 // Loads a single day and exposes optimistic mutators. Every change updates
@@ -55,6 +57,7 @@ export function useDay(date) {
           logs: { ...prev.logs },
           symptoms: { ...prev.symptoms },
           therapies: [...prev.therapies],
+          therapyNotes: { ...(prev.therapyNotes || {}) },
           trackers: JSON.parse(JSON.stringify(prev.trackers || {})),
         });
         cacheDay(date, next);
@@ -167,6 +170,30 @@ export function useDay(date) {
     [date, patch]
   );
 
+  const setTherapyNote = useCallback(
+    (therapy_id, note) => {
+      patch((d) => {
+        if (note) {
+          d.therapyNotes[therapy_id] = note;
+          if (!d.therapies.includes(therapy_id)) d.therapies = [...d.therapies, therapy_id];
+        } else {
+          delete d.therapyNotes[therapy_id];
+        }
+        return d;
+      });
+      queueTherapyNote(date, therapy_id, note);
+    },
+    [date, patch]
+  );
+
+  const setPeriod = useCallback(
+    (flow) => {
+      patch((d) => { d.period = flow; return d; });
+      queuePeriod(date, flow);
+    },
+    [date, patch]
+  );
+
   return {
     day,
     loading,
@@ -179,5 +206,7 @@ export function useDay(date) {
     setMeta,
     toggleTherapy,
     setTracker,
+    setTherapyNote,
+    setPeriod,
   };
 }

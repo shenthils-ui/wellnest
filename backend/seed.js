@@ -122,6 +122,65 @@ function ensureExtras() {
     );
     ['Doctor', 'NAET', 'Hyperbaric', 'Osteopath'].forEach((name, i) => insL.run(name, name, i));
   }
+
+  applyContentV2();
+}
+
+// One-time content tidy-up (runs once per database, guarded by a settings flag),
+// so existing installs pick up the routine/tracker changes without manual edits.
+function applyContentV2() {
+  const done = db.prepare("SELECT value FROM settings WHERE key = 'content_v2'").get();
+  if (done) return;
+
+  const tx = db.transaction(() => {
+    const retireAct = db.prepare("UPDATE activities SET active = 0 WHERE name = ? COLLATE NOCASE AND active = 1");
+    retireAct.run('Prepare Salad #2');
+    retireAct.run('Remove castor oil pack');
+    retireAct.run('Light activity/reading');
+
+    // Castor oil pack lives in the evening; drop the "Apply" wording.
+    db.prepare(
+      "UPDATE activities SET name = 'Castor oil pack', time_block = 'EVENING' WHERE name = 'Apply castor oil pack'"
+    ).run();
+
+    // Tracker renames
+    const renameTrk = db.prepare('UPDATE trackers SET name = ?, hint = ? WHERE name = ? COLLATE NOCASE');
+    renameTrk.run('Snacks', 'Nuts, seeds and other snacks.', 'Nuts & seeds');
+    renameTrk.run('Lunch — vegetables', 'What lunch contained.', 'Salad vegetables');
+    renameTrk.run('Lunch — cooking style', null, 'Cooking style');
+
+    // Add Dinner trackers if missing
+    const VEG = ['Zucchini', 'Paprika', 'Onion', 'Avocado', 'Cucumber', 'Tomato',
+      'Carrot', 'Beetroot', 'Lettuce', 'Spinach', 'Lentils', 'Lemon', 'Coconut'];
+    const COOKING = ['Fresh / raw', 'Steamed', 'Cooked', 'Fried'];
+    const addTracker = (name, kind, icon, hint, options) => {
+      const exists = db.prepare('SELECT id FROM trackers WHERE name = ? COLLATE NOCASE').get(name);
+      if (exists) return;
+      const maxOrder = db.prepare('SELECT COALESCE(MAX(display_order), -1) m FROM trackers').get().m;
+      const info = db.prepare(
+        `INSERT INTO trackers (name, kind, section, has_intensity, icon, hint, display_order, active)
+         VALUES (?, ?, 'food', 0, ?, ?, ?, 1)`
+      ).run(name, kind, icon, hint, maxOrder + 1);
+      const insOpt = db.prepare('INSERT INTO tracker_options (tracker_id, label, emoji, display_order, active) VALUES (?, ?, NULL, ?, 1)');
+      options.forEach((o, i) => insOpt.run(info.lastInsertRowid, o, i));
+    };
+    addTracker('Dinner — vegetables', 'multi', '🍽️', 'What dinner contained.', VEG);
+    addTracker('Dinner — cooking style', 'single', '🍳', null, COOKING);
+
+    // Order food trackers sensibly: juice, lunch (veg, cooking), dinner (veg, cooking), snacks, drinks
+    const order = ['Green juice ingredients', 'Lunch — vegetables', 'Lunch — cooking style',
+      'Dinner — vegetables', 'Dinner — cooking style', 'Snacks', 'Other drinks'];
+    const setOrder = db.prepare('UPDATE trackers SET display_order = ? WHERE name = ? COLLATE NOCASE');
+    order.forEach((name, i) => setOrder.run(i, name));
+
+    // Reorder symptoms: Sleep, Energy, Morning Mood, Evening Pain, Evening Mood, Stress
+    const metricOrder = ['sleep', 'energy', 'mood_am', 'pain', 'mood_pm', 'stress'];
+    const setMetric = db.prepare('UPDATE metrics SET display_order = ? WHERE key = ?');
+    metricOrder.forEach((key, i) => setMetric.run(i, key));
+
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('content_v2', '1')").run();
+  });
+  tx();
 }
 
 if (require.main === module) {
