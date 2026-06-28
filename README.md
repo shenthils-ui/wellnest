@@ -156,8 +156,9 @@ Your data is one file on the PC:
 - **Restore:** Settings → **Backup & export** → **Import a JSON backup**, choose a
   previously saved file. *Importing replaces all current data* with the backup.
 - **Doctor report:** Settings → **Backup & export** → **Doctor report** opens a
-  clean, printable summary for a date range — use your browser’s Print → “Save as
-  PDF” for appointments.
+  clean summary for a date range. From there you can **Download PDF**, **Save to
+  Drive** (if Google Drive is connected), or **Print**. (For raw numbers in Excel,
+  use the **CSV** exports above instead.)
 - **Copy the file directly:** you can also just copy `wellnest.db` to back it up,
   and copy it back to restore (do this while WellNest is stopped).
 

@@ -18,6 +18,7 @@ const insightRoutes = require('./routes/insights');
 const libraryRoutes = require('./routes/library');
 const cycleRoutes = require('./routes/cycle');
 const driveRoutes = require('./routes/drive');
+const reportRoutes = require('./routes/report');
 const backupRoutes = require('./routes/backup');
 
 const PORT = parseInt(process.env.PORT, 10) || 3001;
@@ -55,6 +56,7 @@ app.use('/api/insights', insightRoutes);
 app.use('/api', libraryRoutes);
 app.use('/api', cycleRoutes);
 app.use('/api', driveRoutes);
+app.use('/api', reportRoutes);
 app.use('/api', backupRoutes);
 
 // 404 for unknown API routes (so SPA fallback never swallows API typos).

@@ -89,23 +89,33 @@ async function ensureFolder(token) {
   return cj.id;
 }
 
-async function uploadBackup() {
+// Generic upload to the WellNest Backups folder. content may be a string or a
+// Buffer (e.g. a PDF). Returns the created file's metadata.
+async function uploadFileToDrive(name, mimeType, content) {
   const token = await getAccessToken();
   const folderId = await ensureFolder(token);
-  const payload = JSON.stringify(dumpAll(), null, 2);
-  const name = `wellnest-backup-${new Date().toISOString().slice(0, 10)}-${Date.now()}.json`;
   const boundary = 'wellnest' + Date.now();
-  const meta = { name, parents: [folderId], mimeType: 'application/json' };
-  const multipart =
+  const meta = { name, parents: [folderId], mimeType };
+  const pre = Buffer.from(
     `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(meta)}\r\n` +
-    `--${boundary}\r\nContent-Type: application/json\r\n\r\n${payload}\r\n--${boundary}--`;
+    `--${boundary}\r\nContent-Type: ${mimeType}\r\n\r\n`,
+    'utf8'
+  );
+  const mid = Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf8');
+  const post = Buffer.from(`\r\n--${boundary}--`, 'utf8');
+  const body = Buffer.concat([pre, mid, post]);
   const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id,webViewLink,name', {
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
-    body: multipart,
+    body,
   });
   if (!r.ok) throw new Error('upload failed: ' + (await r.text()));
-  const j = await r.json();
+  return r.json();
+}
+
+async function uploadBackup() {
+  const name = `wellnest-backup-${new Date().toISOString().slice(0, 10)}-${Date.now()}.json`;
+  const j = await uploadFileToDrive(name, 'application/json', JSON.stringify(dumpAll(), null, 2));
   sSet('drive_last_backup', new Date().toISOString());
   if (j.webViewLink) sSet('drive_last_file', j.webViewLink);
   return j;
@@ -201,3 +211,5 @@ function startAutoBackup() {
 
 module.exports = router;
 module.exports.startAutoBackup = startAutoBackup;
+module.exports.uploadFileToDrive = uploadFileToDrive;
+module.exports.isDriveConnected = isConnected;
