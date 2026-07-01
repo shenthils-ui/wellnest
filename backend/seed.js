@@ -124,6 +124,62 @@ function ensureExtras() {
   }
 
   applyContentV2();
+  applyContentV3();
+}
+
+// Second content update: adds the activities & food options Aswini uses that
+// weren't in the original routine. Idempotent + guarded, so existing installs
+// pick them up once without touching anything already logged.
+function applyContentV3() {
+  const done = db.prepare("SELECT value FROM settings WHERE key = 'content_v3'").get();
+  if (done) return;
+
+  const addActivity = (name, block, first = false) => {
+    if (db.prepare('SELECT id FROM activities WHERE name = ? COLLATE NOCASE').get(name)) return;
+    const r = db.prepare('SELECT MIN(display_order) mn, MAX(display_order) mx FROM activities WHERE time_block = ?').get(block);
+    const order = first ? (r.mn ?? 0) - 1 : (r.mx ?? -1) + 1;
+    db.prepare(
+      `INSERT INTO activities (name, time_block, is_husband_task, expected_days, display_order, active)
+       VALUES (?, ?, 0, NULL, ?, 1)`
+    ).run(name, block, order);
+  };
+  const addOption = (trackerName, label) => {
+    const t = db.prepare('SELECT id FROM trackers WHERE name = ? COLLATE NOCASE').get(trackerName);
+    if (!t) return;
+    const dupe = db.prepare('SELECT id FROM tracker_options WHERE tracker_id = ? AND label = ? COLLATE NOCASE').get(t.id, label);
+    if (dupe) { db.prepare('UPDATE tracker_options SET active = 1 WHERE id = ?').run(dupe.id); return; }
+    const mx = db.prepare('SELECT COALESCE(MAX(display_order), -1) m FROM tracker_options WHERE tracker_id = ?').get(t.id).m;
+    db.prepare('INSERT INTO tracker_options (tracker_id, label, emoji, display_order, active) VALUES (?, ?, NULL, ?, 1)').run(t.id, label, mx + 1);
+  };
+
+  const tx = db.transaction(() => {
+    // renames / tweaks
+    db.prepare("UPDATE activities SET name = 'Lemon water + shilajit (1 L)' WHERE name = 'Shilajit drink'").run();
+    db.prepare("UPDATE activities SET name = 'Dinner (~17:30)' WHERE name = 'Dinner ~18:00-19:00'").run();
+    db.prepare("UPDATE activities SET expected_days = NULL WHERE name = 'Green juice'").run(); // now taken daily
+
+    // new activities, by block
+    addActivity('Gratitude & affirmation', 'EARLY_MORNING', true);
+    addActivity('Black garlic (10)', 'EARLY_MORNING');
+    addActivity('Vitamin D3 + K2 + Mg', 'EARLY_MORNING');
+    addActivity('Wild yam cream (abdomen)', 'EARLY_MORNING');
+    addActivity('Gentian tea (before lunch)', 'MIDDAY');
+    addActivity('Digestive enzymes (after lunch)', 'MIDDAY');
+    addActivity('Walk after lunch (30 min)', 'MIDDAY');
+    addActivity('Warm bath / sauna', 'AFTERNOON');
+    addActivity('Green juice (snack)', 'AFTERNOON');
+    addActivity('Gentian tea (before dinner)', 'EVENING');
+    addActivity('Walk after dinner (30 min)', 'EVENING');
+
+    // extra food options (lunch & dinner)
+    ['Greens', 'Avocado', 'Edamame', 'Peas', 'Tofu', 'Soup'].forEach((l) => {
+      addOption('Lunch — vegetables', l);
+      addOption('Dinner — vegetables', l);
+    });
+
+    db.prepare("INSERT OR REPLACE INTO settings (key, value) VALUES ('content_v3', '1')").run();
+  });
+  tx();
 }
 
 // One-time content tidy-up (runs once per database, guarded by a settings flag),

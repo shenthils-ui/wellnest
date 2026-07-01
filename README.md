@@ -208,12 +208,29 @@ npm run seed          # (re)seed the starter routine if the DB is empty
 
 ## 10. Troubleshooting
 
-**The phone can’t reach WellNest.**
-- Confirm `start.bat` is running on the PC (black window open).
-- Confirm both devices are on the **same Wi‑Fi**.
-- Re‑check the PC’s IP (section 5) — it may have changed.
-- Windows Firewall: allow Node.js on **Private networks** (re‑run `start.bat`, or
-  Windows Security → Firewall → Allow an app → enable Node.js for Private).
+**The phone can’t reach WellNest (but it works on the PC).**
+This almost always means the **firewall is blocking it** or the **PC’s IP changed** —
+*not* an app problem. (The PC works via `localhost`, which bypasses both, so “works on
+the laptop” doesn’t tell you the phone can reach it.) Fix it for good:
+1. **Open the firewall once:** double‑click **`allow-firewall.bat`** (it asks for admin,
+   opens the port for all networks). Also set your home Wi‑Fi to **Private**
+   (Windows Settings → Network → your Wi‑Fi → Network profile type → Private).
+2. **Give the PC a fixed address so the URL never changes** — do *one* of these:
+   - **Best:** in your router’s admin page, add a **DHCP reservation** for this PC
+     (bind its MAC address to a fixed IP like `192.168.1.42`). The phone URL then
+     never changes.
+   - **Or** use the PC’s **hostname** instead of the IP: `http://YOUR‑PC‑NAME.local:3001`
+     (the start window prints this). It survives IP changes and works well on iPhone.
+3. Make sure both devices are on the **same Wi‑Fi** (not a “Guest” network), and the
+   PC is **awake** and running `start.bat` (see `install-autostart.bat` + keeping the
+   PC from sleeping).
+4. On the phone, **remove the old home‑screen icon and re‑add it** from the new stable
+   URL so the installed app points at the right address.
+
+Note: because the app is served over plain `http` on your home network (not `https`),
+phones can’t fully cache it to *open* while the PC is unreachable — so keep the PC on
+and reachable. (Want the app to open even when briefly offline? That needs local HTTPS;
+ask and it can be set up.)
 
 **`start.bat` shows an error about `better-sqlite3` / build tools.**
 - It normally installs a prebuilt binary with no tools needed. If it fails on your
