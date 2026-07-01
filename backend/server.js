@@ -105,6 +105,9 @@ const server = app.listen(PORT, HOST, () => {
   if (ips.length) {
     console.log('  On the phone (same Wi-Fi):');
     ips.forEach((ip) => console.log(`               http://${ip}:${PORT}`));
+    // A hostname address survives router IP changes — best to bookmark on phones.
+    console.log(`  Or (more stable): http://${os.hostname()}.local:${PORT}`);
+    console.log('  Tip: reserve a fixed IP for this PC in your router so the phone URL never changes.');
   } else {
     console.log('  On the phone: run `ipconfig` to find this PC\'s IPv4 address.');
   }

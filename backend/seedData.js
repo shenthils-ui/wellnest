@@ -16,45 +16,54 @@ const METRICS = [
   { key: 'stress',  name: 'Stress',         good_direction: 'low',  time_hint: 'anytime' },
 ];
 
-const VEG = ['Zucchini', 'Paprika', 'Onion', 'Avocado', 'Cucumber', 'Tomato',
-  'Carrot', 'Beetroot', 'Lettuce', 'Spinach', 'Lentils', 'Lemon', 'Coconut'];
+const VEG = ['Greens', 'Avocado', 'Zucchini', 'Paprika', 'Onion', 'Cucumber', 'Tomato',
+  'Carrot', 'Beetroot', 'Lettuce', 'Spinach', 'Lentils', 'Edamame', 'Peas', 'Tofu',
+  'Soup', 'Lemon', 'Coconut'];
 const COOKING = ['Fresh / raw', 'Steamed', 'Cooked', 'Fried'];
 
 // [name, time_block, is_husband_task, expected_days]
 const ACTIVITIES = [
   // EARLY_MORNING
+  ['Gratitude & affirmation', 'EARLY_MORNING', 0, null],
   ['Oil pulling', 'EARLY_MORNING', 0, null],
   ['Lemon + sodium bicarbonate shot', 'EARLY_MORNING', 0, null],
   ['Prepare bicarbonate water for the day', 'EARLY_MORNING', 1, null],
-  ['Shilajit drink', 'EARLY_MORNING', 0, null],
+  ['Lemon water + shilajit (1 L)', 'EARLY_MORNING', 0, null],
+  ['Black garlic (10)', 'EARLY_MORNING', 0, null],
+  ['Vitamin D3 + K2 + Mg', 'EARLY_MORNING', 0, null],
   ['Yoga 30 min', 'EARLY_MORNING', 0, null],
+  ['Wild yam cream (abdomen)', 'EARLY_MORNING', 0, null],
   ['Ointment - Morning', 'EARLY_MORNING', 0, null],
   ['Trampoline #1 (5 min)', 'EARLY_MORNING', 0, null],
 
   // MID_MORNING
   ['Breakfast/Salad #1', 'MID_MORNING', 0, null],
   ['Hemp drops', 'MID_MORNING', 0, null],
-  ['Apply castor oil pack', 'MID_MORNING', 0, null],
   ['Microgreens care/cut (30 min)', 'MID_MORNING', 0, null],
   ['Walking outside (60-90 min)', 'MID_MORNING', 0, null],
-  ['Green juice', 'MID_MORNING', 0, '1,3,5,0'], // Mon/Wed/Fri/Sun
+  ['Green juice', 'MID_MORNING', 0, null],
   ['Trampoline #2 (5 min)', 'MID_MORNING', 0, null],
 
   // MIDDAY
-  ['Prepare Salad #2', 'MIDDAY', 1, null],
+  ['Gentian tea (before lunch)', 'MIDDAY', 0, null],
   ['Lunch (~12:00)', 'MIDDAY', 0, null],
+  ['Digestive enzymes (after lunch)', 'MIDDAY', 0, null],
+  ['Walk after lunch (30 min)', 'MIDDAY', 0, null],
   ['Quiet rest 30 min', 'MIDDAY', 0, null],
   ['Reading time', 'MIDDAY', 0, null],
 
   // AFTERNOON
   ['Trampoline #3 (5 min)', 'AFTERNOON', 0, null],
-  ['Light activity/reading', 'AFTERNOON', 0, null],
+  ['Warm bath / sauna', 'AFTERNOON', 0, null],
+  ['Green juice (snack)', 'AFTERNOON', 0, null],
   ['Trampoline #4 (5 min)', 'AFTERNOON', 0, null],
 
   // EVENING
-  ['Dinner ~18:00-19:00', 'EVENING', 1, null],
+  ['Gentian tea (before dinner)', 'EVENING', 0, null],
+  ['Dinner (~17:30)', 'EVENING', 1, null],
+  ['Walk after dinner (30 min)', 'EVENING', 0, null],
   ['Ointment - Evening', 'EVENING', 0, null],
-  ['Remove castor oil pack', 'EVENING', 0, null],
+  ['Castor oil pack', 'EVENING', 0, null],
   ['Wind-down activity', 'EVENING', 0, null],
   ['Sleep by 21:30-22:00', 'EVENING', 0, null],
 ];
