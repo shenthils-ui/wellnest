@@ -9,7 +9,9 @@ package-lock.json
 
 # Build output
 frontend/dist/
+frontend/dist-standalone/
 dist/
+dist-standalone/
 
 # Local database (user's private health data — never commit)
 backend/data/*.db

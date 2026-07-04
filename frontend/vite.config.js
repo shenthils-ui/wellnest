@@ -2,9 +2,16 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
-// WellNest frontend. The dev server and (via Express) the production build are
-// both reachable from a phone on the same Wi-Fi. No external requests are made.
-export default defineConfig({
+// WellNest frontend. Two build targets from one codebase:
+//   `vite build`                    → server version (talks to the Express API)
+//   `vite build --mode standalone`  → on-device version (sql.js engine, no server)
+// VITE_STANDALONE is defined per-mode so Rollup can strip the unused engine.
+export default defineConfig(({ mode }) => {
+  const standalone = mode === 'standalone';
+  return {
+  define: {
+    'import.meta.env.VITE_STANDALONE': JSON.stringify(standalone ? '1' : '0'),
+  },
   plugins: [
     react(),
     VitePWA({
@@ -36,7 +43,8 @@ export default defineConfig({
         // our own IndexedDB queue, so they are intentionally left to the network.
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api/],
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2,wasm}'],
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // sql.js wasm (~1.2MB)
         cleanupOutdatedCaches: true,
         clientsClaim: true,
         skipWaiting: true,
@@ -63,4 +71,5 @@ export default defineConfig({
       '/api': { target: 'http://localhost:3001', changeOrigin: true },
     },
   },
+  };
 });
