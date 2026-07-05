@@ -8,7 +8,11 @@ import { VitePWA } from 'vite-plugin-pwa';
 // VITE_STANDALONE is defined per-mode so Rollup can strip the unused engine.
 export default defineConfig(({ mode }) => {
   const standalone = mode === 'standalone';
+  // Standalone can be hosted under a subpath (GitHub Pages serves it at
+  // /wellnest/). BASE_PATH is set by the deploy workflow; local previews use '/'.
+  const base = standalone ? (process.env.BASE_PATH || '/') : '/';
   return {
+  base,
   define: {
     'import.meta.env.VITE_STANDALONE': JSON.stringify(standalone ? '1' : '0'),
   },
@@ -25,8 +29,8 @@ export default defineConfig(({ mode }) => {
         background_color: '#faf7f2',
         display: 'standalone',
         orientation: 'portrait',
-        start_url: '/',
-        scope: '/',
+        start_url: base,
+        scope: base,
         icons: [
           { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
           { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },

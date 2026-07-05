@@ -11,7 +11,8 @@ registerSW({ immediate: true });
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
-    <BrowserRouter>
+    {/* basename follows the deploy path (e.g. /wellnest/ on GitHub Pages) */}
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       <AppProvider>
         <App />
       </AppProvider>
