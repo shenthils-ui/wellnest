@@ -1,7 +1,12 @@
-// Low-level fetch helpers. API is always same-origin: in production Express
-// serves the app, and in dev Vite proxies /api to the backend.
+// Low-level API helpers. In the normal (server) build these are same-origin
+// fetch calls. In the STANDALONE build there is no server — the same calls are
+// answered on-device by the sql.js engine (dynamically imported so it never
+// ships in the server build).
 
 const DEFAULT_TIMEOUT = 8000;
+
+// Vite replaces import.meta.env.VITE_STANDALONE at build time.
+export const STANDALONE = import.meta.env.VITE_STANDALONE === '1';
 
 export class NetworkError extends Error {}
 export class HttpError extends Error {
@@ -13,6 +18,14 @@ export class HttpError extends Error {
 }
 
 async function request(method, path, body, { timeout = DEFAULT_TIMEOUT } = {}) {
+  // Inline env check (not the STANDALONE const) so Rollup dead-code-eliminates
+  // this whole block — and the sql.js engine — from the normal server build.
+  if (import.meta.env.VITE_STANDALONE === '1') {
+    const { localCall } = await import('./local/client.js');
+    const { status, body: data } = await localCall(method, path, body);
+    if (status >= 200 && status < 300) return data;
+    throw new HttpError(status, data);
+  }
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   let res;

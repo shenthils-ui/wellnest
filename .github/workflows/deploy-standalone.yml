@@ -1,0 +1,53 @@
+# Builds the standalone (on-device) WellNest app and publishes it to GitHub
+# Pages at https://<owner>.github.io/wellnest/ whenever main is updated.
+#
+# One-time repo setting: Settings → Pages → Source → "GitHub Actions".
+#
+# Privacy note: only the app CODE is published. All health data stays inside
+# the phone's browser storage — the standalone build makes no server calls.
+name: Deploy standalone app to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install frontend dependencies
+        run: npm --prefix frontend install --no-audit --no-fund
+      - name: Build standalone app
+        env:
+          BASE_PATH: /wellnest/
+        run: npm --prefix frontend run build:standalone
+      - name: SPA fallback for GitHub Pages (deep links)
+        run: cp frontend/dist-standalone/index.html frontend/dist-standalone/404.html
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/dist-standalone
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

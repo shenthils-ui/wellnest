@@ -42,6 +42,7 @@ installable phone app (PWA) that runs entirely on your own Windows PC.
 6. [How offline sync works](#6-how-offline-sync-works)
 7. [How reminders work (and their limits)](#7-how-reminders-work-and-their-limits)
 8. [Backing up & restoring your data](#8-backing-up--restoring-your-data)
+8b. [Standalone phone app (no laptop needed)](#8b-standalone-phone-app-no-laptop-needed)
 9. [Development mode](#9-development-mode)
 10. [Troubleshooting](#10-troubleshooting)
 11. [What’s inside / tech notes](#11-whats-inside--tech-notes)
@@ -184,6 +185,35 @@ in **once on the PC** (the phone then just triggers the upload). One‑time setu
 After that: **“Back up to Drive now”** works from any device, and you can switch on
 **automatic weekly** Drive backups. Secrets/tokens are stored locally and are
 **never** included in the backup file itself.
+
+## 8b. Standalone phone app (no laptop needed)
+
+WellNest also ships as a **standalone app** that runs entirely on the phone —
+the database lives inside the phone's browser storage, so the laptop does not
+need to be on. It is published automatically to GitHub Pages whenever `main`
+changes:
+
+**Install on the phone (Android):**
+1. Open **`https://shenthils-ui.github.io/wellnest/`** in Chrome on the phone.
+2. Tap the **⋮** menu → **Install app** / **Add to Home screen**.
+3. Open it from the icon. Done — it works offline, no PC required.
+
+**One-time repo setting** (needed once before the first deploy):
+GitHub → your repo → **Settings → Pages → Source → "GitHub Actions"**.
+
+**Moving data between phone and laptop:** both versions use the same backup
+file. Export on one (**Settings → Backup & export → Save backup (JSON)**),
+then import it on the other (**Import a JSON backup**). Importing *replaces*
+the data on the receiving side, so treat one device as the "main" copy.
+
+**Important notes for the standalone app:**
+- The two copies do **not** auto-sync — the phone is its own island. Use the
+  export/import file to move data.
+- **Back up regularly** (save the JSON to Google Drive). Phone browsers can
+  clear site storage if an app is unused for a very long time — the backup file
+  is your safety net.
+- Only the app *code* is hosted on GitHub Pages. **Health data never leaves the
+  phone** — the standalone build makes no server calls at all.
 
 ## 9. Development mode
 

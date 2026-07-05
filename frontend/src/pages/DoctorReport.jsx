@@ -10,6 +10,7 @@ import {
 } from '../lib/data';
 import { todayISO, addDays, prettyDate } from '../lib/date';
 import { reportPdfUrl, reportToDrive } from '../lib/data';
+import { STANDALONE } from '../lib/net';
 import SymptomTrendChart from '../components/SymptomTrendChart';
 import { PrinterIcon, ChevronLeft, DownloadIcon } from '../components/Icons';
 
@@ -80,14 +81,18 @@ export default function DoctorReport() {
           <input type="date" value={to} min={from} max={to0} onChange={(e) => setTo(e.target.value)} className="rounded-lg border px-2 py-1" />
         </div>
         <div className="flex items-center gap-1.5">
-          <a href={reportPdfUrl(from, to)} download className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white">
-            <DownloadIcon width={16} height={16} /> PDF
-          </a>
-          <button onClick={saveToDrive} disabled={driveBusy} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200 disabled:opacity-50">
-            {driveBusy ? '…' : '☁️'} Drive
-          </button>
-          <button onClick={() => window.print()} title="Print" className="rounded-lg px-2 py-1.5 text-slate-500 ring-1 ring-slate-200">
-            <PrinterIcon width={16} height={16} />
+          {!STANDALONE && (
+            <>
+              <a href={reportPdfUrl(from, to)} download className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white">
+                <DownloadIcon width={16} height={16} /> PDF
+              </a>
+              <button onClick={saveToDrive} disabled={driveBusy} className="inline-flex items-center gap-1.5 rounded-lg bg-white px-2.5 py-1.5 text-sm font-medium text-slate-600 ring-1 ring-slate-200 disabled:opacity-50">
+                {driveBusy ? '…' : '☁️'} Drive
+              </button>
+            </>
+          )}
+          <button onClick={() => window.print()} className="inline-flex items-center gap-1.5 rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white">
+            <PrinterIcon width={16} height={16} /> {STANDALONE ? 'Save as PDF' : 'Print'}
           </button>
         </div>
       </div>

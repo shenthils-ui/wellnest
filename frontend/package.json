@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "build:standalone": "vite build --mode standalone --outDir dist-standalone",
     "preview": "vite preview",
     "icons": "node scripts/gen-icons.mjs"
   },
@@ -14,7 +15,8 @@
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "react-router-dom": "^6.26.2",
-    "recharts": "^2.13.3"
+    "recharts": "^2.13.3",
+    "sql.js": "^1.14.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.4",
