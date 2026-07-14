@@ -198,8 +198,14 @@ changes:
 2. Tap the **⋮** menu → **Install app** / **Add to Home screen**.
 3. Open it from the icon. Done — it works offline, no PC required.
 
-**One-time repo setting** (needed once before the first deploy):
+**One-time repo setting** (do this *before* the first deploy, order matters):
 GitHub → your repo → **Settings → Pages → Source → "GitHub Actions"**.
+
+> If you merge the deploy workflow before setting this, the first automatic
+> deploy will fail (GitHub's `configure-pages` step needs the setting already
+> in place). That's harmless — just set it now, then go to the **Actions**
+> tab → the failed "Deploy standalone app to GitHub Pages" run → **Re-run
+> failed jobs**. It will succeed on the retry.
 
 **Moving data between phone and laptop:** both versions use the same backup
 file. Export on one (**Settings → Backup & export → Save backup (JSON)**),
