@@ -5,7 +5,12 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 export function isValidDate(s) {
   if (typeof s !== 'string' || !DATE_RE.test(s)) return false;
   const d = new Date(s + 'T00:00:00');
-  return !Number.isNaN(d.getTime());
+  if (Number.isNaN(d.getTime())) return false;
+  // JS's Date silently rolls over invalid day-of-month (e.g. Feb 29 in a
+  // non-leap year, or day 31 of a 30-day month) into the next month instead
+  // of rejecting it — confirm the round-trip matches what was asked for.
+  const [y, m, day] = s.split('-').map(Number);
+  return d.getFullYear() === y && d.getMonth() + 1 === m && d.getDate() === day;
 }
 export function todayStr() {
   const d = new Date();

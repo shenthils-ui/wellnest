@@ -94,33 +94,46 @@ function lanAddresses() {
   return out;
 }
 
-const server = app.listen(PORT, HOST, () => {
-  const ips = lanAddresses();
-  const bar = '─'.repeat(54);
-  console.log('\n' + bar);
-  console.log('  🌿  WellNest is running');
-  console.log(bar);
-  console.log(`  Mode:        ${hasBuild ? 'production (serving built PWA)' : 'API only (run the Vite dev server for the UI)'}`);
-  console.log(`  On this PC:  http://localhost:${PORT}`);
-  if (ips.length) {
-    console.log('  On the phone (same Wi-Fi):');
-    ips.forEach((ip) => console.log(`               http://${ip}:${PORT}`));
-    // A hostname address survives router IP changes — best to bookmark on phones.
-    console.log(`  Or (more stable): http://${os.hostname()}.local:${PORT}`);
-    console.log('  Tip: reserve a fixed IP for this PC in your router so the phone URL never changes.');
-  } else {
-    console.log('  On the phone: run `ipconfig` to find this PC\'s IPv4 address.');
-  }
-  console.log(`  Database:    ${DB_PATH}`);
-  console.log(bar + '\n');
-  driveRoutes.startAutoBackup();
-});
+// Starts listening + wires shutdown handling. Kept separate from module load
+// so tests can import `app` (for supertest) without binding a port, printing
+// the banner, starting the Drive auto-backup timer, or attaching signal
+// handlers that would leak across test files.
+function startServer() {
+  const server = app.listen(PORT, HOST, () => {
+    const ips = lanAddresses();
+    const bar = '─'.repeat(54);
+    console.log('\n' + bar);
+    console.log('  🌿  WellNest is running');
+    console.log(bar);
+    console.log(`  Mode:        ${hasBuild ? 'production (serving built PWA)' : 'API only (run the Vite dev server for the UI)'}`);
+    console.log(`  On this PC:  http://localhost:${PORT}`);
+    if (ips.length) {
+      console.log('  On the phone (same Wi-Fi):');
+      ips.forEach((ip) => console.log(`               http://${ip}:${PORT}`));
+      // A hostname address survives router IP changes — best to bookmark on phones.
+      console.log(`  Or (more stable): http://${os.hostname()}.local:${PORT}`);
+      console.log('  Tip: reserve a fixed IP for this PC in your router so the phone URL never changes.');
+    } else {
+      console.log('  On the phone: run `ipconfig` to find this PC\'s IPv4 address.');
+    }
+    console.log(`  Database:    ${DB_PATH}`);
+    console.log(bar + '\n');
+    driveRoutes.startAutoBackup();
+  });
 
-// Flush WAL on shutdown so the .db file is always clean & portable.
-function shutdown() {
-  try { db.pragma('wal_checkpoint(TRUNCATE)'); db.close(); } catch (_) { /* ignore */ }
-  server.close(() => process.exit(0));
-  setTimeout(() => process.exit(0), 500).unref();
+  // Flush WAL on shutdown so the .db file is always clean & portable.
+  function shutdown() {
+    try { db.pragma('wal_checkpoint(TRUNCATE)'); db.close(); } catch (_) { /* ignore */ }
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(0), 500).unref();
+  }
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
+  return server;
 }
-process.on('SIGINT', shutdown);
-process.on('SIGTERM', shutdown);
+
+module.exports = { app, startServer };
+
+if (require.main === module) {
+  startServer();
+}

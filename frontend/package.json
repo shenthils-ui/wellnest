@@ -8,7 +8,8 @@
     "build": "vite build",
     "build:standalone": "vite build --mode standalone --outDir dist-standalone",
     "preview": "vite preview",
-    "icons": "node scripts/gen-icons.mjs"
+    "icons": "node scripts/gen-icons.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "idb": "^8.0.0",
@@ -24,6 +25,7 @@
     "postcss": "^8.4.49",
     "tailwindcss": "^3.4.17",
     "vite": "^5.4.11",
-    "vite-plugin-pwa": "^0.21.1"
+    "vite-plugin-pwa": "^0.21.1",
+    "vitest": "^2.1.9"
   }
 }
